@@ -1211,11 +1211,8 @@
     <p>Glimpses of our celebrations, gatherings and the warmth of our community.</p>
   </div>
 
-  <div class="gallery-tabs" id="galleryYearTabs">
-    <button class="tab-btn active" onclick="selectYear('all', this)">All Years</button>
-    <button class="tab-btn" onclick="selectYear('2026', this)">2026</button>
-    <button class="tab-btn" onclick="selectYear('2024', this)">2024</button>
-  </div>
+  <!-- Year tabs are auto-generated from the gallery data -->
+  <div class="gallery-tabs" id="galleryYearTabs"></div>
 
   <!-- Event sub-tabs shown after selecting a year -->
   <div class="gallery-tabs" id="galleryEventTabs" style="margin-top:-20px;margin-bottom:30px;display:none;">
@@ -1744,8 +1741,36 @@ function renderGalleryItems(items) {
   });
 }
 
-// Init: show all
+// Build the year filter buttons from whatever years exist in galleryData.
+// Called on initial load and again after the Firebase loader merges in
+// admin uploads, so new years appear without touching the HTML.
+function buildYearTabs(activeYear) {
+  const container = document.getElementById('galleryYearTabs');
+  if (!container) return;
+  const data = window.galleryData || {};
+  const years = Object.keys(data).sort((a, b) => String(b).localeCompare(String(a)));
+
+  container.innerHTML = '';
+
+  const allBtn = document.createElement('button');
+  allBtn.className = 'tab-btn' + (activeYear === 'all' || !activeYear ? ' active' : '');
+  allBtn.textContent = 'All Years';
+  allBtn.addEventListener('click', () => selectYear('all', allBtn));
+  container.appendChild(allBtn);
+
+  years.forEach(year => {
+    const b = document.createElement('button');
+    b.className = 'tab-btn' + (activeYear === year ? ' active' : '');
+    b.textContent = year;
+    b.addEventListener('click', () => selectYear(year, b));
+    container.appendChild(b);
+  });
+}
+window.buildYearTabs = buildYearTabs;
+
+// Init: build tabs and show all
 (function() {
+  buildYearTabs('all');
   const all = [];
   Object.values(galleryData).forEach(yo => Object.values(yo).forEach(arr => all.push(...arr)));
   renderGalleryItems(all);
@@ -2007,6 +2032,10 @@ if (FIREBASE_CONFIG.apiKey === "PASTE_YOUR_FIREBASE_CONFIG_HERE") {
               if (!window.galleryData[year]) window.galleryData[year] = {};
               Object.assign(window.galleryData[year], grouped[year]);
             });
+          }
+          // Rebuild year tabs to include any new years from admin uploads
+          if (typeof window.buildYearTabs === 'function') {
+            window.buildYearTabs('all');
           }
           // Re-render full gallery view (all years, all events)
           if (typeof window.renderGalleryItems === 'function') {
