@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel — India i Agder</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --saffron:   #FF6B00;
+  --gold:      #D4A017;
+  --marigold:  #F5A623;
+  --crimson:   #C0392B;
+  --forest:    #1A4D2E;
+  --teal:      #006D6D;
+  --ivory:     #FFF8EE;
+  --night:     #1A0A00;
+  --text:      #2C1810;
+  --light:     #6B4226;
+  --border:    rgba(212,160,23,0.25);
+  --shadow:    0 8px 40px rgba(26,10,0,0.12);
+  --radius:    14px;
+  --sidebar:   240px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Poppins', sans-serif; background: #f7f0e6; color: var(--text); min-height: 100vh; }
+
+/* ── LOGIN ── */
+#loginScreen {
+  min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  background: var(--night);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Ccircle cx='40' cy='40' r='32' fill='none' stroke='rgba(212,160,23,0.07)' stroke-width='1.5'/%3E%3Ccircle cx='40' cy='40' r='16' fill='none' stroke='rgba(255,107,0,0.05)' stroke-width='1'/%3E%3C/svg%3E");
+}
+.login-box {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(212,160,23,0.2);
+  border-radius: 24px;
+  padding: 48px 44px;
+  width: 100%; max-width: 420px;
+  backdrop-filter: blur(12px);
+  text-align: center;
+}
+.login-box .emblem {
+  font-size: 48px; margin-bottom: 8px;
+}
+.login-box h1 {
+  font-family: 'Playfair Display', serif;
+  color: #fff; font-size: 24px; margin-bottom: 4px;
+}
+.login-box p { color: rgba(255,255,255,0.45); font-size: 13px; margin-bottom: 32px; }
+.login-box input {
+  width: 100%; padding: 14px 18px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(212,160,23,0.25);
+  border-radius: 50px; color: #fff; font-size: 14px;
+  font-family: 'Poppins', sans-serif;
+  outline: none; margin-bottom: 12px;
+  transition: border-color 0.2s;
+}
+.login-box input::placeholder { color: rgba(255,255,255,0.3); }
+.login-box input:focus { border-color: var(--saffron); }
+.login-box button {
+  width: 100%; padding: 14px;
+  background: linear-gradient(135deg, var(--saffron), var(--crimson));
+  border: none; border-radius: 50px;
+  color: #fff; font-size: 15px; font-weight: 700;
+  font-family: 'Poppins', sans-serif;
+  cursor: pointer; transition: opacity 0.2s;
+  margin-top: 4px;
+}
+.login-box button:hover { opacity: 0.88; }
+#loginError {
+  color: #ff6b6b; font-size: 13px; margin-top: 10px; display: none;
+}
+
+/* ── SETUP BANNER ── */
+#setupBanner {
+  background: linear-gradient(90deg, var(--forest), var(--teal));
+  color: #fff; padding: 14px 24px;
+  font-size: 13px; line-height: 1.7;
+  border-bottom: 2px solid var(--gold);
+  display: none;
+}
+#setupBanner strong { color: var(--marigold); }
+#setupBanner code {
+  background: rgba(0,0,0,0.3); padding: 2px 7px;
+  border-radius: 4px; font-size: 12px; font-family: monospace;
+}
+.setup-steps { margin-top: 10px; padding-left: 18px; }
+.setup-steps li { margin-bottom: 6px; }
+.setup-close {
+  float: right; background: none; border: none;
+  color: rgba(255,255,255,0.6); font-size: 20px; cursor: pointer; line-height: 1;
+}
+
+/* ── SHELL ── */
+#appShell { display: none; min-height: 100vh; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0;
+  width: var(--sidebar);
+  background: var(--night);
+  border-right: 1px solid rgba(212,160,23,0.15);
+  display: flex; flex-direction: column;
+  z-index: 100;
+}
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid rgba(212,160,23,0.12);
+}
+.sidebar-logo .brand { font-family: 'Playfair Display', serif; color: var(--gold); font-size: 16px; }
+.sidebar-logo .sub { color: rgba(255,255,255,0.35); font-size: 11px; letter-spacing: 1px; margin-top: 2px; }
+.sidebar-logo .badge {
+  display: inline-block; margin-top: 8px;
+  background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.3);
+  color: var(--saffron); font-size: 10px; font-weight: 700;
+  letter-spacing: 1.5px; padding: 3px 10px; border-radius: 50px;
+  text-transform: uppercase;
+}
+.sidebar-nav { flex: 1; padding: 16px 0; overflow-y: auto; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px; cursor: pointer;
+  color: rgba(255,255,255,0.55); font-size: 14px;
+  transition: all 0.2s; border-left: 3px solid transparent;
+  user-select: none;
+}
+.nav-item:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.04); }
+.nav-item.active {
+  color: #fff; border-left-color: var(--saffron);
+  background: rgba(255,107,0,0.08);
+}
+.nav-item .icon { font-size: 18px; width: 22px; text-align: center; }
+.nav-section {
+  padding: 14px 20px 6px;
+  color: rgba(255,255,255,0.2); font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase;
+}
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid rgba(212,160,23,0.12);
+}
+.logout-btn {
+  width: 100%; padding: 10px;
+  background: rgba(192,57,43,0.15);
+  border: 1px solid rgba(192,57,43,0.3);
+  border-radius: 50px; color: #ff9b8e;
+  font-size: 13px; font-family: 'Poppins', sans-serif;
+  cursor: pointer; transition: all 0.2s;
+}
+.logout-btn:hover { background: rgba(192,57,43,0.3); }
+
+/* ── MAIN CONTENT ── */
+.main {
+  margin-left: var(--sidebar);
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+}
+.topbar {
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  padding: 16px 32px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+  box-shadow: 0 2px 12px rgba(26,10,0,0.06);
+}
+.topbar h2 { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--night); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #2ecc71; display: inline-block;
+}
+.status-label { font-size: 12px; color: var(--light); }
+
+.content { padding: 32px; flex: 1; }
+
+/* ── TABS ── */
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── CARDS ── */
+.card {
+  background: #fff; border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  padding: 28px; margin-bottom: 24px;
+}
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.card-header h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 18px; color: var(--night);
+}
+.card p.hint { font-size: 13px; color: var(--light); margin-bottom: 16px; line-height: 1.6; }
+
+/* ── BUTTONS ── */
+.btn {
+  padding: 10px 22px; border-radius: 50px; border: none;
+  font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.2s; display: inline-flex;
+  align-items: center; gap: 7px;
+}
+.btn-primary { background: linear-gradient(135deg, var(--saffron), var(--crimson)); color: #fff; }
+.btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn-secondary {
+  background: transparent; color: var(--saffron);
+  border: 1.5px solid var(--saffron);
+}
+.btn-secondary:hover { background: rgba(255,107,0,0.07); }
+.btn-danger { background: rgba(192,57,43,0.1); color: var(--crimson); border: 1px solid rgba(192,57,43,0.25); }
+.btn-danger:hover { background: rgba(192,57,43,0.2); }
+.btn-sm { padding: 6px 14px; font-size: 12px; }
+.btn-icon { padding: 8px; border-radius: 50%; width: 34px; height: 34px; justify-content: center; }
+
+/* ── FORM ELEMENTS ── */
+.form-group { margin-bottom: 18px; }
+.form-group label {
+  display: block; font-size: 12px; font-weight: 600;
+  color: var(--light); letter-spacing: 0.5px;
+  text-transform: uppercase; margin-bottom: 7px;
+}
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; padding: 11px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px; font-size: 14px;
+  font-family: 'Poppins', sans-serif;
+  color: var(--text); background: #fff;
+  outline: none; transition: border-color 0.2s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  border-color: var(--saffron);
+}
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+/* ── UPLOAD ZONE ── */
+.upload-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius); padding: 36px 24px;
+  text-align: center; cursor: pointer;
+  transition: all 0.2s; background: #faf5ec;
+  position: relative;
+}
+.upload-zone:hover, .upload-zone.drag { border-color: var(--saffron); background: rgba(255,107,0,0.04); }
+.upload-zone input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.upload-zone .icon { font-size: 36px; margin-bottom: 10px; }
+.upload-zone p { font-size: 14px; color: var(--light); }
+.upload-zone span { color: var(--saffron); font-weight: 600; }
+
+/* ── PROGRESS BAR ── */
+.progress-wrap {
+  background: rgba(212,160,23,0.15);
+  border-radius: 50px; height: 8px;
+  overflow: hidden; margin: 10px 0;
+}
+.progress-bar {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--saffron), var(--gold));
+  border-radius: 50px; transition: width 0.3s;
+}
+
+/* ── MEDIA GRID ── */
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 14px; margin-top: 16px;
+}
+.media-thumb {
+  position: relative; border-radius: 10px; overflow: hidden;
+  aspect-ratio: 16/9; background: var(--night);
+  border: 1px solid var(--border);
+  group: true;
+}
+.media-thumb img, .media-thumb video {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.media-thumb .thumb-overlay {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 6px; opacity: 0; transition: opacity 0.2s;
+}
+.media-thumb:hover .thumb-overlay { opacity: 1; }
+.media-thumb .thumb-label {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+  color: #fff; font-size: 10px; padding: 8px 6px 4px;
+}
+.media-thumb .play-badge {
+  position: absolute; top: 6px; left: 6px;
+  background: rgba(0,0,0,0.6); color: #fff;
+  font-size: 10px; padding: 2px 7px; border-radius: 50px;
+}
+
+/* ── TABLE ── */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  text-align: left; padding: 10px 14px;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--light); border-bottom: 2px solid var(--border);
+}
+.data-table td {
+  padding: 13px 14px; font-size: 13px;
+  border-bottom: 1px solid rgba(212,160,23,0.1);
+  vertical-align: middle;
+}
+.data-table tr:hover td { background: rgba(255,107,0,0.03); }
+.badge {
+  display: inline-block; padding: 3px 10px;
+  border-radius: 50px; font-size: 11px; font-weight: 600;
+}
+.badge-green { background: rgba(46,204,113,0.12); color: #27ae60; }
+.badge-orange { background: rgba(255,107,0,0.12); color: var(--saffron); }
+.badge-grey { background: rgba(0,0,0,0.07); color: #888; }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 28px; right: 28px;
+  background: var(--night); color: #fff;
+  padding: 14px 22px; border-radius: 50px;
+  font-size: 13px; font-weight: 500;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  border-left: 4px solid var(--saffron);
+  transform: translateY(20px); opacity: 0;
+  transition: all 0.35s; z-index: 9999;
+  pointer-events: none;
+}
+#toast.show { transform: translateY(0); opacity: 1; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: #fff; border-radius: 20px;
+  padding: 32px; width: 100%; max-width: 560px;
+  max-height: 90vh; overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.3);
+  transform: scale(0.95); transition: transform 0.2s;
+}
+.modal-overlay.open .modal { transform: scale(1); }
+.modal h3 { font-family: 'Playfair Display', serif; font-size: 20px; margin-bottom: 20px; color: var(--night); }
+.modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+/* ── DASHBOARD STATS ── */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 28px;
+}
+.stat-card {
+  background: #fff; border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 22px 24px;
+  box-shadow: 0 2px 12px rgba(26,10,0,0.06);
+}
+.stat-card .s-icon { font-size: 28px; margin-bottom: 10px; }
+.stat-card .s-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px; color: var(--saffron); font-weight: 700; line-height: 1;
+}
+.stat-card .s-lbl { font-size: 12px; color: var(--light); margin-top: 4px; }
+
+/* ── CAROUSEL ORDER ── */
+.slide-list { display: flex; flex-direction: column; gap: 12px; }
+.slide-row {
+  display: flex; align-items: center; gap: 14px;
+  background: #faf5ec; border: 1px solid var(--border);
+  border-radius: 12px; padding: 10px 14px;
+}
+.slide-row img {
+  width: 100px; height: 56px; object-fit: cover; border-radius: 8px; flex-shrink: 0;
+}
+.slide-row .slide-info { flex: 1; font-size: 13px; color: var(--text); }
+.slide-row .slide-info span { font-size: 11px; color: var(--light); display: block; }
+.drag-handle { cursor: grab; color: var(--light); font-size: 18px; }
+
+/* ── CONFIG PANEL ── */
+.config-block {
+  background: rgba(26,77,46,0.05);
+  border: 1px solid rgba(26,77,46,0.15);
+  border-radius: var(--radius); padding: 20px 24px; margin-bottom: 16px;
+}
+.config-block h4 { font-size: 14px; font-weight: 700; color: var(--forest); margin-bottom: 12px; }
+.config-block code {
+  display: block; background: var(--night); color: var(--marigold);
+  padding: 12px 16px; border-radius: 8px; font-size: 12px;
+  font-family: monospace; line-height: 1.7; margin: 10px 0;
+  white-space: pre-wrap; word-break: break-all;
+}
+.step-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: var(--saffron); color: #fff;
+  font-size: 12px; font-weight: 700; margin-right: 8px; flex-shrink: 0;
+}
+.step { display: flex; align-items: flex-start; gap: 0; margin-bottom: 14px; font-size: 13px; line-height: 1.6; color: var(--text); }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: rgba(212,160,23,0.3); border-radius: 3px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .sidebar { width: 60px; }
+  .sidebar-logo .brand, .sidebar-logo .sub, .sidebar-logo .badge,
+  .nav-item span, .nav-section, .sidebar-footer .logout-btn span { display: none; }
+  .nav-item { justify-content: center; padding: 14px; }
+  .main { margin-left: 60px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .form-row, .form-row-3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .content { padding: 16px; }
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════════ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="emblem">🪷</div>
+    <h1>India i Agder</h1>
+    <p>Admin Panel · Secure Login</p>
+    <input type="text" id="loginUser" placeholder="Username" autocomplete="username">
+    <input type="password" id="loginPass" placeholder="Password" autocomplete="current-password"
+      onkeydown="if(event.key==='Enter') doLogin()">
+    <button onclick="doLogin()">Sign In</button>
+    <div id="loginError">Incorrect credentials. Please try again.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     APP SHELL
+══════════════════════════════════════════ -->
+<div id="appShell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="brand">India i Agder</div>
+      <div class="sub">ADMIN PANEL</div>
+      <div class="badge">🔐 Admin</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Overview</div>
+      <div class="nav-item active" onclick="showTab('dashboard', this)">
+        <span class="icon">📊</span><span>Dashboard</span>
+      </div>
+      <div class="nav-section">Content</div>
+      <div class="nav-item" onclick="showTab('carousel', this)">
+        <span class="icon">🎠</span><span>Carousel</span>
+      </div>
+      <div class="nav-item" onclick="showTab('gallery', this)">
+        <span class="icon">🖼️</span><span>Gallery</span>
+      </div>
+      <div class="nav-item" onclick="showTab('events', this)">
+        <span class="icon">📅</span><span>Events</span>
+      </div>
+      <div class="nav-section">Community</div>
+      <div class="nav-item" onclick="showTab('members', this)">
+        <span class="icon">👥</span><span>Members</span>
+      </div>
+      <div class="nav-section">Settings</div>
+      <div class="nav-item" onclick="showTab('config', this)">
+        <span class="icon">⚙️</span><span>Setup Guide</span>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="doLogout()">🚪 <span>Sign Out</span></button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Setup Banner -->
+    <div id="setupBanner">
+      <button class="setup-close" onclick="document.getElementById('setupBanner').style.display='none'">×</button>
+      <strong>⚙️ Not configured yet.</strong> See the <strong>Setup Guide</strong> tab for the full Firebase + Cloudinary walkthrough.
+    </div>
+
+    <div class="topbar">
+      <h2 id="topbarTitle">Dashboard</h2>
+      <div class="topbar-right">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-label" id="statusLabel">Checking Firebase…</span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ── DASHBOARD ── -->
+      <div id="tab-dashboard" class="tab-panel active">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="s-icon">🎠</div>
+            <div class="s-val" id="statSlides">–</div>
+            <div class="s-lbl">Carousel Slides</div>
+          </div>
+          <div class="stat-card">
+            <div class="s-icon">🖼️</div>
+            <div class="s-val" id="statMedia">–</div>
+            <div class="s-lbl">Gallery Items</div>
+          </div>
+          <div class="stat-card">
+            <div class="s-icon">📅</div>
+            <div class="s-val" id="statEvents">–</div>
+            <div class="s-lbl">Upcoming Events</div>
+          </div>
+          <div class="stat-card">
+            <div class="s-icon">👥</div>
+            <div class="s-val" id="statMembers">–</div>
+            <div class="s-lbl">Join Requests</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Quick Actions</h3></div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="showTab('carousel', document.querySelector('[onclick*=carousel]'))">🎠 Add Carousel Slide</button>
+            <button class="btn btn-secondary" onclick="showTab('gallery', document.querySelector('[onclick*=gallery]'))">🖼️ Upload Gallery Photos</button>
+            <button class="btn btn-secondary" onclick="showTab('events', document.querySelector('[onclick*=events]'))">📅 Add New Event</button>
+            <button class="btn btn-secondary" onclick="showTab('members', document.querySelector('[onclick*=members]'))">👥 View Join Requests</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h3>Recent Activity</h3></div>
+          <div id="recentActivity" style="font-size:13px;color:var(--light);line-height:2;">
+            Loading activity…
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CAROUSEL ── -->
+      <div id="tab-carousel" class="tab-panel">
+        <div class="card">
+          <div class="card-header">
+            <h3>🎠 Hero Carousel Slides</h3>
+            <button class="btn btn-primary btn-sm" onclick="openModal('carouselModal')">+ Add Slide</button>
+          </div>
+          <p class="hint">These are the big banner images on the homepage. Recommended size: <strong>1920×1080px</strong> (landscape). Max 4–6 slides for best performance.</p>
+          <div id="slideList" class="slide-list">
+            <div style="color:var(--light);font-size:13px;text-align:center;padding:32px;">Loading slides…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── GALLERY ── -->
+      <div id="tab-gallery" class="tab-panel">
+        <div class="card">
+          <div class="card-header">
+            <h3>🖼️ Gallery Upload</h3>
+            <button class="btn btn-primary btn-sm" onclick="openModal('galleryModal')">+ Upload Media</button>
+          </div>
+          <p class="hint">Upload photos or videos for any event. They will appear live on the website gallery immediately after upload.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;">
+            <select id="galleryFilterYear" onchange="renderGalleryFiltered()" style="padding:8px 14px;border-radius:50px;border:1.5px solid var(--border);font-family:'Poppins',sans-serif;font-size:13px;outline:none;">
+              <option value="all">All Years</option>
+            </select>
+            <select id="galleryFilterEvent" onchange="renderGalleryFiltered()" style="padding:8px 14px;border-radius:50px;border:1.5px solid var(--border);font-family:'Poppins',sans-serif;font-size:13px;outline:none;">
+              <option value="all">All Events</option>
+            </select>
+          </div>
+          <div id="galleryGrid" class="media-grid">
+            <div style="color:var(--light);font-size:13px;text-align:center;padding:32px;grid-column:1/-1;">Loading gallery…</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── EVENTS ── -->
+      <div id="tab-events" class="tab-panel">
+        <div class="card">
+          <div class="card-header">
+            <h3>📅 Upcoming Events</h3>
+            <button class="btn btn-primary btn-sm" onclick="openModal('eventModal'); clearEventForm()">+ Add Event</button>
+          </div>
+          <p class="hint">Events appear on the homepage calendar and events list. Past events are automatically hidden.</p>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Event</th><th>Date</th><th>Location</th><th>Category</th><th>Status</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="eventsTableBody">
+                <tr><td colspan="6" style="text-align:center;color:var(--light);padding:32px;">Loading events…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── MEMBERS ── -->
+      <div id="tab-members" class="tab-panel">
+        <div class="card">
+          <div class="card-header">
+            <h3>👥 Join Requests & Members</h3>
+            <button class="btn btn-secondary btn-sm" onclick="exportMembers()">⬇ Export CSV</button>
+          </div>
+          <p class="hint">People who submitted the "Be Part of Our Story" form. Mark them as active members or archive them.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;">
+            <select id="memberFilter" onchange="loadMembers()" style="padding:8px 14px;border-radius:50px;border:1.5px solid var(--border);font-family:'Poppins',sans-serif;font-size:13px;outline:none;">
+              <option value="all">All</option>
+              <option value="pending">Pending</option>
+              <option value="active">Active Members</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr><th>Name</th><th>Email</th><th>Joined</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="membersTableBody">
+                <tr><td colspan="5" style="text-align:center;color:var(--light);padding:32px;">Loading members…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── CONFIG ── -->
+      <div id="tab-config" class="tab-panel">
+        <div class="card">
+          <div class="card-header"><h3>⚙️ Setup Guide — Firebase + Cloudinary</h3></div>
+          <p class="hint" style="margin-bottom:24px;">This admin panel uses <strong>Firebase Firestore</strong> for data (events, members, gallery info) and <strong>Cloudinary</strong> for hosting images/videos. Both have generous free tiers — no credit card needed.</p>
+
+          <div class="config-block">
+            <h4>Step 1 — Create a Firebase Project (Spark / Free plan)</h4>
+            <div class="step"><span class="step-num">1</span>Go to <strong>console.firebase.google.com</strong> and sign in with your Google account.</div>
+            <div class="step"><span class="step-num">2</span>Click <strong>"Add project"</strong> → name it <strong>india-i-agder</strong> → disable Google Analytics → Create.</div>
+            <div class="step"><span class="step-num">3</span>In the left sidebar, click <strong>Firestore Database</strong> → <strong>"Create database"</strong> → choose <strong>"Start in test mode"</strong> → pick region <strong>europe-west3 (Frankfurt)</strong> → Done.</div>
+            <div class="step"><span class="step-num">4</span>You can <strong>skip</strong> Firebase Storage — we're using Cloudinary instead, so you stay on the free Spark plan.</div>
+          </div>
+
+          <div class="config-block">
+            <h4>Step 2 — Get your Firebase config</h4>
+            <div class="step"><span class="step-num">1</span>Go to <strong>Project Settings</strong> (gear icon) → scroll to <strong>"Your apps"</strong> → click <strong>"&lt;/&gt; Web"</strong> → register app → copy the config.</div>
+            <div class="step"><span class="step-num">2</span>Open <code>admin.html</code> in any text editor and replace the values in <code>FIREBASE_CONFIG</code>.</div>
+            <code>const FIREBASE_CONFIG = {
+  apiKey: "AIzaSy...",
+  authDomain: "india-i-agder.firebaseapp.com",
+  projectId: "india-i-agder",
+  storageBucket: "india-i-agder.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abc123"
+};</code>
+          </div>
+
+          <div class="config-block">
+            <h4>Step 3 — Create a Cloudinary account (free)</h4>
+            <div class="step"><span class="step-num">1</span>Sign up at <strong>cloudinary.com</strong> — free plan gives 25 GB storage + 25 GB bandwidth/month, no credit card needed.</div>
+            <div class="step"><span class="step-num">2</span>On the dashboard, copy your <strong>Cloud Name</strong> (shown at the top).</div>
+            <div class="step"><span class="step-num">3</span>Click the gear icon (Settings) → <strong>Upload</strong> tab → scroll to <strong>Upload presets</strong> → <strong>"Add upload preset"</strong>.</div>
+            <div class="step"><span class="step-num">4</span>Set <strong>Signing Mode = Unsigned</strong>, give it a name (e.g. <code>iia_uploads</code>), save.</div>
+          </div>
+
+          <div class="config-block">
+            <h4>Step 4 — Paste Cloudinary keys into admin.html</h4>
+            <div class="step"><span class="step-num">1</span>In <code>admin.html</code>, find <code>CLOUDINARY_CLOUD_NAME</code> and <code>CLOUDINARY_UPLOAD_PRESET</code>.</div>
+            <div class="step"><span class="step-num">2</span>Replace the placeholders with your values:</div>
+            <code>const CLOUDINARY_CLOUD_NAME    = "your-cloud-name";
+const CLOUDINARY_UPLOAD_PRESET = "iia_uploads";</code>
+            <div class="step"><span class="step-num">3</span>Do the same in <code>fixed_carousel.html</code> if it also uploads media.</div>
+          </div>
+
+          <div class="config-block">
+            <h4>Step 5 — Change the Admin Password</h4>
+            <div class="step"><span class="step-num">1</span>In <code>admin.html</code>, find <code>ADMIN_PASSWORD</code>.</div>
+            <div class="step"><span class="step-num">2</span>Change it to a strong password of your choice.</div>
+            <div class="step"><span class="step-num">3</span>Also change <code>ADMIN_USERNAME</code> from <code>admin</code> to whatever you prefer.</div>
+          </div>
+
+          <div style="background:rgba(255,107,0,0.07);border:1px solid rgba(255,107,0,0.2);border-radius:12px;padding:16px 20px;font-size:13px;color:var(--text);line-height:1.7;margin-top:8px;">
+            💡 <strong>Note on deletes:</strong> When you delete a slide or gallery item from this admin panel, the record is removed from Firestore and the item no longer shows on your site. The actual file stays in your Cloudinary account (because unsigned client deletes aren't allowed for security). You can periodically clean up unused files from the Cloudinary dashboard if you like.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /appShell -->
+
+<!-- ══════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════ -->
+
+<!-- Carousel Modal -->
+<div id="carouselModal" class="modal-overlay" onclick="if(event.target===this)closeModal('carouselModal')">
+  <div class="modal">
+    <h3>🎠 Add Carousel Slide</h3>
+    <div class="form-group">
+      <label>Slide Image</label>
+      <div class="upload-zone" id="carouselUploadZone">
+        <input type="file" id="carouselFile" accept="image/*" onchange="previewCarouselFile(this)">
+        <div class="icon">🖼️</div>
+        <p>Drop image here or <span>browse</span></p>
+        <p style="font-size:11px;margin-top:4px;">Recommended: 1920×1080px JPG or PNG</p>
+      </div>
+      <img id="carouselPreview" style="display:none;width:100%;border-radius:10px;margin-top:10px;max-height:180px;object-fit:cover;">
+    </div>
+    <div class="form-group">
+      <label>Slide Label (optional)</label>
+      <input type="text" id="carouselLabel" placeholder="e.g. Diwali 2025 · Arendal">
+    </div>
+    <div class="progress-wrap" id="carouselProgress" style="display:none">
+      <div class="progress-bar" id="carouselProgressBar"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('carouselModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="uploadCarouselSlide()">Upload Slide</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gallery Modal -->
+<div id="galleryModal" class="modal-overlay" onclick="if(event.target===this)closeModal('galleryModal')">
+  <div class="modal">
+    <h3>🖼️ Upload Gallery Media</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Year</label>
+        <input type="number" id="uploadYear" min="1900" max="2100" placeholder="e.g. 2015">
+      </div>
+      <div class="form-group">
+        <label>Event / Festival</label>
+        <input type="text" id="uploadEvent" list="eventSuggestions" placeholder="e.g. Holi, Diwali, Garba Night…" autocomplete="off">
+        <datalist id="eventSuggestions">
+          <option value="Holi">
+          <option value="Diwali">
+          <option value="Independence Day">
+          <option value="Indisk Dag">
+          <option value="17. mai">
+          <option value="Sports Day">
+          <option value="Garba">
+          <option value="Republic Day">
+          <option value="Onam">
+          <option value="Navratri">
+        </datalist>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Label</label>
+      <input type="text" id="uploadLabel" placeholder="e.g. Holi 2025 · Dance Performance">
+    </div>
+    <div class="form-group">
+      <label>Photo or Video Files (multiple or whole folder)</label>
+      <div class="upload-zone" id="galleryUploadZone">
+        <input type="file" id="galleryFiles" accept="image/*,video/*" multiple>
+        <div class="icon">📁</div>
+        <p id="galleryFileLabel">Drop files or a folder here, or <span>browse</span></p>
+        <p style="font-size:11px;margin-top:4px;">JPG, PNG, MP4, MOV supported</p>
+      </div>
+      <input type="file" id="galleryFolder" webkitdirectory directory multiple style="display:none;">
+      <button type="button" id="pickFolderBtn"
+        style="margin-top:10px;background:transparent;border:1.5px solid var(--saffron);color:var(--saffron);padding:8px 18px;border-radius:50px;font-size:12px;font-family:'Poppins',sans-serif;font-weight:600;cursor:pointer;">
+        📂 Or pick a whole folder
+      </button>
+    </div>
+    <div class="progress-wrap" id="galleryProgress" style="display:none">
+      <div class="progress-bar" id="galleryProgressBar"></div>
+    </div>
+    <div id="galleryUploadStatus" style="font-size:12px;color:var(--light);margin-top:6px;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('galleryModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="uploadGalleryFiles()">Upload</button>
+    </div>
+  </div>
+</div>
+
+<!-- Event Modal -->
+<div id="eventModal" class="modal-overlay" onclick="if(event.target===this)closeModal('eventModal')">
+  <div class="modal">
+    <h3 id="eventModalTitle">📅 Add Event</h3>
+    <input type="hidden" id="editEventId">
+    <div class="form-group">
+      <label>Event Title</label>
+      <input type="text" id="eventTitle" placeholder="e.g. Diwali 2025 — Festival of Lights">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="eventDate">
+      </div>
+      <div class="form-group">
+        <label>Time</label>
+        <input type="time" id="eventTime">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Location</label>
+      <input type="text" id="eventLocation" placeholder="e.g. Arendal Kulturhus, Arendal">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Category</label>
+        <select id="eventCategory">
+          <option value="festival">🎉 Festival</option>
+          <option value="meetup">☕ Meetup</option>
+          <option value="sports">🏏 Sports</option>
+          <option value="culture">🎭 Culture</option>
+          <option value="volunteer">🤝 Volunteer</option>
+          <option value="other">📌 Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Accent Color</label>
+        <input type="color" id="eventColor" value="#FF6B00" style="height:44px;cursor:pointer;">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="eventDesc" rows="3" placeholder="Short description of the event…" style="resize:vertical;"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('eventModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEvent()">Save Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ══════════════════════════════════════════
+     FIREBASE + CLOUDINARY LOGIC
+══════════════════════════════════════════ -->
+<script type="module">
+// ─────────────────────────────────────────────
+//  CONFIGURATION — paste your keys here
+//  See the "Setup Guide" tab inside the app for steps
+// ─────────────────────────────────────────────
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyBKpi4l7Q4FkcUW9z5O2bmMIJnWPDoRr7k",
+  authDomain:        "iiawebsite.firebaseapp.com",
+  projectId:         "iiawebsite",
+  storageBucket:     "iiawebsite.firebasestorage.app",
+  messagingSenderId: "585241753068",
+  appId:             "1:585241753068:web:4ea87a8d1faf58e2ccbcc9"
+};
+
+// Cloudinary config — get these from cloudinary.com after signing up
+const CLOUDINARY_CLOUD_NAME    = "dvjbsfng3";
+const CLOUDINARY_UPLOAD_PRESET = "iia_images";
+
+// Admin credentials — CHANGE THESE before deploying!
+const ADMIN_USERNAME = "admin";
+const ADMIN_PASSWORD = "india2025";
+
+// ─────────────────────────────────────────────
+//  Firebase init (Firestore only — no Storage)
+// ─────────────────────────────────────────────
+import { initializeApp }              from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, where, orderBy, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+let db, firebaseReady = false;
+
+function initFirebase() {
+  try {
+    if (FIREBASE_CONFIG.apiKey === "PASTE_YOUR_FIREBASE_CONFIG_HERE") {
+      setStatus(false, "Firebase not configured");
+      document.getElementById('setupBanner').style.display = 'block';
+      return;
+    }
+    const app = initializeApp(FIREBASE_CONFIG);
+    db = getFirestore(app);
+    firebaseReady = true;
+    setStatus(true, "Firebase connected");
+    if (CLOUDINARY_CLOUD_NAME === "PASTE_YOUR_CLOUD_NAME_HERE") {
+      document.getElementById('setupBanner').style.display = 'block';
+      setStatus(true, "Firebase OK · Cloudinary not configured");
+    }
+    loadDashboard();
+    loadSlides();
+    loadGalleryItems();
+    loadEvents();
+    loadMembers();
+  } catch(e) {
+    setStatus(false, "Firebase error");
+    console.error(e);
+  }
+}
+
+function setStatus(ok, msg) {
+  document.getElementById('statusDot').style.background = ok ? '#2ecc71' : '#e74c3c';
+  document.getElementById('statusLabel').textContent = msg;
+}
+
+// ─────────────────────────────────────────────
+//  LOGIN
+// ─────────────────────────────────────────────
+window.doLogin = function() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  if (u === ADMIN_USERNAME && p === ADMIN_PASSWORD) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appShell').style.display = 'block';
+    initFirebase();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+  }
+};
+
+window.doLogout = function() {
+  document.getElementById('appShell').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginPass').value = '';
+};
+
+// ─────────────────────────────────────────────
+//  NAVIGATION
+// ─────────────────────────────────────────────
+const tabTitles = {
+  dashboard:'Dashboard', carousel:'Carousel Slides',
+  gallery:'Gallery', events:'Events', members:'Members & Join Requests', config:'Setup Guide'
+};
+window.showTab = function(name, el) {
+  document.querySelectorAll('.tab-panel').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (el) el.classList.add('active');
+  document.getElementById('topbarTitle').textContent = tabTitles[name] || name;
+};
+
+// ─────────────────────────────────────────────
+//  MODAL HELPERS
+// ─────────────────────────────────────────────
+window.openModal  = n => document.getElementById(n).classList.add('open');
+window.closeModal = n => document.getElementById(n).classList.remove('open');
+
+// ─────────────────────────────────────────────
+//  TOAST
+// ─────────────────────────────────────────────
+window.toast = function(msg, duration=3000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+};
+
+// ─────────────────────────────────────────────
+//  CLOUDINARY UPLOAD HELPER
+// ─────────────────────────────────────────────
+function uploadToCloudinary(file, onProgress) {
+  return new Promise((resolve, reject) => {
+    if (CLOUDINARY_CLOUD_NAME === "PASTE_YOUR_CLOUD_NAME_HERE") {
+      reject(new Error('Cloudinary not configured. See Setup Guide tab.'));
+      return;
+    }
+    const isVideo = file.type.startsWith('video/');
+    const endpoint = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${isVideo ? 'video' : 'image'}/upload`;
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', endpoint);
+    xhr.upload.onprogress = e => {
+      if (e.lengthComputable && onProgress) onProgress((e.loaded / e.total) * 100);
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(JSON.parse(xhr.responseText));
+      } else {
+        reject(new Error('Upload failed: ' + xhr.responseText));
+      }
+    };
+    xhr.onerror = () => reject(new Error('Network error during upload'));
+    xhr.send(formData);
+  });
+}
+
+// ─────────────────────────────────────────────
+//  CLIENT-SIDE IMAGE RESIZE
+//  Shrinks oversized photos before they hit Cloudinary so we stay
+//  under the free-tier per-file limit and don't burn storage/bandwidth.
+//  Skips videos and images that are already small enough.
+// ─────────────────────────────────────────────
+const IMAGE_MAX_DIMENSION = 1920;   // longest side, in pixels
+const IMAGE_JPEG_QUALITY  = 0.85;   // 0–1, 0.85 is visually lossless for photos
+
+async function resizeImageForUpload(file) {
+  if (!file.type.startsWith('image/')) return file;
+  // Browsers can't decode HEIC/HEIF to canvas — let Cloudinary handle them
+  if (/heic|heif/i.test(file.type)) return file;
+
+  let objectUrl;
+  try {
+    objectUrl = URL.createObjectURL(file);
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error('Could not decode image'));
+      i.src = objectUrl;
+    });
+
+    const longest = Math.max(img.width, img.height);
+    // If already small enough AND under 1.5 MB, don't bother
+    if (longest <= IMAGE_MAX_DIMENSION && file.size < 1.5 * 1024 * 1024) {
+      return file;
+    }
+
+    const scale = Math.min(1, IMAGE_MAX_DIMENSION / longest);
+    const w = Math.round(img.width * scale);
+    const h = Math.round(img.height * scale);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+
+    const blob = await new Promise(resolve =>
+      canvas.toBlob(resolve, 'image/jpeg', IMAGE_JPEG_QUALITY)
+    );
+    if (!blob || blob.size >= file.size) return file;
+
+    const newName = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+    return new File([blob], newName, { type: 'image/jpeg', lastModified: Date.now() });
+  } catch (e) {
+    console.warn('Resize failed for', file.name, e);
+    return file; // fall back to original on any error
+  } finally {
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+  }
+}
+
+// Default the upload year to the current year
+document.getElementById('uploadYear').value = new Date().getFullYear();
+
+// Cache of all gallery items so filters work client-side
+let galleryCache = [];
+
+// ─────────────────────────────────────────────
+//  DASHBOARD
+// ─────────────────────────────────────────────
+async function loadDashboard() {
+  if (!firebaseReady) return;
+  try {
+    const [slides, gallery, events, members] = await Promise.all([
+      getDocs(collection(db,'carousel')),
+      getDocs(collection(db,'gallery')),
+      getDocs(collection(db,'events')),
+      getDocs(collection(db,'members'))
+    ]);
+    document.getElementById('statSlides').textContent  = slides.size;
+    document.getElementById('statMedia').textContent   = gallery.size;
+    document.getElementById('statEvents').textContent  = events.size;
+    document.getElementById('statMembers').textContent = members.size;
+
+    // Recent activity from members
+    const recent = [];
+    members.forEach(d => recent.push({ ...d.data(), id: d.id }));
+    recent.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+    const html = recent.slice(0,5).map(m =>
+      `<div style="padding:8px 0;border-bottom:1px solid rgba(212,160,23,0.08);">
+        🙋 <strong>${m.name}</strong> requested to join · <span style="color:var(--light)">${m.email}</span>
+        <span style="float:right;font-size:11px;color:var(--light)">${m.createdAt ? new Date(m.createdAt.seconds*1000).toLocaleDateString('en-GB') : 'recently'}</span>
+      </div>`
+    ).join('') || '<span style="color:var(--light)">No recent activity yet.</span>';
+    document.getElementById('recentActivity').innerHTML = html;
+  } catch(e) { console.error(e); }
+}
+
+// ─────────────────────────────────────────────
+//  CAROUSEL
+// ─────────────────────────────────────────────
+async function loadSlides() {
+  if (!firebaseReady) { document.getElementById('slideList').innerHTML = '<div style="color:var(--light);font-size:13px;text-align:center;padding:32px;">Firebase not connected yet. See Setup tab.</div>'; return; }
+  try {
+    const snap = await getDocs(query(collection(db,'carousel'), orderBy('order','asc')));
+    const slides = [];
+    snap.forEach(d => slides.push({ ...d.data(), id: d.id }));
+    renderSlideList(slides);
+  } catch(e) { console.error(e); }
+}
+
+function renderSlideList(slides) {
+  const el = document.getElementById('slideList');
+  if (!slides.length) { el.innerHTML = '<div style="color:var(--light);font-size:13px;text-align:center;padding:32px;">No slides yet. Click "+ Add Slide" to upload your first hero image.</div>'; return; }
+  el.innerHTML = slides.map(s => `
+    <div class="slide-row" data-id="${s.id}">
+      <span class="drag-handle">⠿</span>
+      <img src="${s.url}" alt="${s.label||''}">
+      <div class="slide-info">${s.label || 'Untitled Slide'}<span>${s.fileName||''}</span></div>
+      <button class="btn btn-danger btn-sm btn-icon" onclick="deleteSlide('${s.id}')">🗑</button>
+    </div>`).join('');
+}
+
+window.previewCarouselFile = function(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const prev = document.getElementById('carouselPreview');
+  prev.src = URL.createObjectURL(file);
+  prev.style.display = 'block';
+};
+
+window.uploadCarouselSlide = async function() {
+  if (!firebaseReady) { toast('⚠️ Firebase not connected. See Setup tab.'); return; }
+  const file  = document.getElementById('carouselFile').files[0];
+  const label = document.getElementById('carouselLabel').value.trim();
+  if (!file) { toast('Please select an image file.'); return; }
+
+  document.getElementById('carouselProgress').style.display = 'block';
+  const progressBar = document.getElementById('carouselProgressBar');
+
+  try {
+    const resized = await resizeImageForUpload(file);
+    const result = await uploadToCloudinary(resized, pct => {
+      progressBar.style.width = pct + '%';
+    });
+    const snap = await getDocs(collection(db,'carousel'));
+    await addDoc(collection(db,'carousel'), {
+      url: result.secure_url,
+      label,
+      fileName: file.name,
+      cloudinaryId: result.public_id,
+      order: snap.size,
+      createdAt: serverTimestamp()
+    });
+    toast('✅ Slide uploaded!');
+    closeModal('carouselModal');
+    document.getElementById('carouselFile').value = '';
+    document.getElementById('carouselLabel').value = '';
+    document.getElementById('carouselPreview').style.display = 'none';
+    document.getElementById('carouselProgress').style.display = 'none';
+    progressBar.style.width = '0%';
+    loadSlides();
+    loadDashboard();
+  } catch(e) {
+    toast('Upload failed: ' + e.message);
+    document.getElementById('carouselProgress').style.display = 'none';
+  }
+};
+
+window.deleteSlide = async function(id) {
+  if (!confirm('Delete this carousel slide?')) return;
+  try {
+    await deleteDoc(doc(db,'carousel',id));
+    toast('🗑 Slide deleted.');
+    loadSlides(); loadDashboard();
+  } catch(e) { toast('Error: ' + e.message); }
+};
+
+// ─────────────────────────────────────────────
+//  GALLERY
+// ─────────────────────────────────────────────
+window.loadGalleryItems = async function() {
+  if (!firebaseReady) { document.getElementById('galleryGrid').innerHTML = '<div style="color:var(--light);font-size:13px;text-align:center;padding:32px;grid-column:1/-1;">Firebase not connected yet.</div>'; return; }
+  try {
+    const snap = await getDocs(query(collection(db,'gallery'), orderBy('createdAt','desc')));
+    galleryCache = [];
+    snap.forEach(d => galleryCache.push({ ...d.data(), id: d.id }));
+    rebuildGalleryFilterOptions();
+    renderGalleryFiltered();
+  } catch(e) { console.error(e); }
+};
+
+function rebuildGalleryFilterOptions() {
+  const years  = [...new Set(galleryCache.map(i => i.year).filter(Boolean))].sort((a,b) => String(b).localeCompare(String(a)));
+  const events = [...new Set(galleryCache.map(i => i.event).filter(Boolean))].sort();
+
+  const ySel = document.getElementById('galleryFilterYear');
+  const eSel = document.getElementById('galleryFilterEvent');
+  const yPrev = ySel.value, ePrev = eSel.value;
+
+  ySel.innerHTML = '<option value="all">All Years</option>'  + years.map(y => `<option value="${y}">${y}</option>`).join('');
+  eSel.innerHTML = '<option value="all">All Events</option>' + events.map(e => `<option value="${e}">${e}</option>`).join('');
+
+  if ([...ySel.options].some(o => o.value === yPrev)) ySel.value = yPrev;
+  if ([...eSel.options].some(o => o.value === ePrev)) eSel.value = ePrev;
+}
+
+window.renderGalleryFiltered = function() {
+  const year  = document.getElementById('galleryFilterYear').value;
+  const event = document.getElementById('galleryFilterEvent').value;
+  const items = galleryCache.filter(i =>
+    (year  === 'all' || String(i.year)  === String(year)) &&
+    (event === 'all' || i.event === event)
+  );
+  renderGalleryGrid(items);
+};
+
+function renderGalleryGrid(items) {
+  const grid = document.getElementById('galleryGrid');
+  if (!items.length) { grid.innerHTML = '<div style="color:var(--light);font-size:13px;text-align:center;padding:32px;grid-column:1/-1;">No media found. Upload some!</div>'; return; }
+  grid.innerHTML = items.map(item => `
+    <div class="media-thumb">
+      ${item.type==='video'
+        ? `<video src="${item.url}" muted preload="metadata" style="width:100%;height:100%;object-fit:cover;"></video><div class="play-badge">▶ Video</div>`
+        : `<img src="${item.url}" alt="${item.label||''}" loading="lazy">`}
+      <div class="thumb-label">${item.label||''}</div>
+      <div class="thumb-overlay">
+        <button class="btn btn-danger btn-sm" onclick="deleteGalleryItem('${item.id}')">🗑 Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+// ─────────────────────────────────────────────
+//  GALLERY FILE SELECTION (files, folders, drag-and-drop)
+// ─────────────────────────────────────────────
+// Files staged for upload — survives across the various input sources
+let selectedGalleryFiles = [];
+
+function isMedia(file) {
+  return file && (file.type.startsWith('image/') || file.type.startsWith('video/'));
+}
+
+function updateGalleryFileLabel() {
+  const n = selectedGalleryFiles.length;
+  document.getElementById('galleryFileLabel').innerHTML =
+    n > 0
+      ? `<span style="color:var(--saffron);font-weight:600;">${n} file${n>1?'s':''} selected</span>`
+      : `Drop files or a folder here, or <span>browse</span>`;
+}
+
+function addToGallerySelection(files) {
+  for (const f of files) if (isMedia(f)) selectedGalleryFiles.push(f);
+  updateGalleryFileLabel();
+}
+
+// Walk a FileSystemEntry tree from a drag-and-drop folder
+function readEntriesRecursively(entry) {
+  return new Promise(resolve => {
+    if (entry.isFile) {
+      entry.file(file => resolve([file]), () => resolve([]));
+    } else if (entry.isDirectory) {
+      const reader = entry.createReader();
+      const all = [];
+      const readBatch = () => {
+        reader.readEntries(async batch => {
+          if (!batch.length) { resolve(all); return; }
+          for (const child of batch) {
+            const childFiles = await readEntriesRecursively(child);
+            all.push(...childFiles);
+          }
+          readBatch(); // readEntries returns at most ~100 entries at a time
+        }, () => resolve(all));
+      };
+      readBatch();
+    } else { resolve([]); }
+  });
+}
+
+// Wire up the file input, folder input, the "pick folder" button,
+// and drag-and-drop on the upload zone.
+(function initGalleryUploadInputs() {
+  const fileInput   = document.getElementById('galleryFiles');
+  const folderInput = document.getElementById('galleryFolder');
+  const folderBtn   = document.getElementById('pickFolderBtn');
+  const zone        = document.getElementById('galleryUploadZone');
+  if (!fileInput || !zone) return;
+
+  fileInput.addEventListener('change', () => {
+    addToGallerySelection(fileInput.files);
+    fileInput.value = '';
+  });
+  folderInput.addEventListener('change', () => {
+    addToGallerySelection(folderInput.files);
+    folderInput.value = '';
+  });
+  folderBtn.addEventListener('click', e => {
+    e.preventDefault(); e.stopPropagation();
+    folderInput.click();
+  });
+
+  // Drag-and-drop — accept files AND folders
+  ['dragenter','dragover'].forEach(ev => zone.addEventListener(ev, e => {
+    e.preventDefault(); e.stopPropagation();
+    zone.classList.add('drag');
+  }));
+  ['dragleave','drop'].forEach(ev => zone.addEventListener(ev, e => {
+    e.preventDefault(); e.stopPropagation();
+    zone.classList.remove('drag');
+  }));
+  zone.addEventListener('drop', async e => {
+    const items = e.dataTransfer.items;
+    if (items && items.length && items[0].webkitGetAsEntry) {
+      const collected = [];
+      for (const item of items) {
+        const entry = item.webkitGetAsEntry();
+        if (entry) {
+          const files = await readEntriesRecursively(entry);
+          collected.push(...files);
+        }
+      }
+      addToGallerySelection(collected);
+    } else if (e.dataTransfer.files) {
+      addToGallerySelection(e.dataTransfer.files);
+    }
+  });
+})();
+
+window.uploadGalleryFiles = async function() {
+  if (!firebaseReady) { toast('⚠️ Firebase not connected. See Setup tab.'); return; }
+  const files = selectedGalleryFiles;
+  const year  = document.getElementById('uploadYear').value.trim();
+  const event = document.getElementById('uploadEvent').value.trim();
+  const label = document.getElementById('uploadLabel').value.trim();
+  if (!files.length) { toast('Please select at least one file.'); return; }
+  if (!year || !/^\d{4}$/.test(year)) { toast('Please enter a 4-digit year.'); return; }
+  if (!event) { toast('Please enter an event name.'); return; }
+
+  const progressWrap = document.getElementById('galleryProgress');
+  const progressBar  = document.getElementById('galleryProgressBar');
+  const statusEl     = document.getElementById('galleryUploadStatus');
+  progressWrap.style.display = 'block';
+
+  let done = 0;
+  let failed = 0;
+  for (const file of files) {
+    const isVideo = file.type.startsWith('video/');
+    try {
+      let toUpload = file;
+      if (!isVideo) {
+        statusEl.textContent = `Preparing ${done+failed+1} of ${files.length}: ${file.name}`;
+        toUpload = await resizeImageForUpload(file);
+      }
+      statusEl.textContent = `Uploading ${done+failed+1} of ${files.length}: ${file.name}`;
+      const result = await uploadToCloudinary(toUpload, pct => {
+        const overall = ((done + failed + pct/100) / files.length) * 100;
+        progressBar.style.width = overall + '%';
+      });
+      await addDoc(collection(db,'gallery'), {
+        url: result.secure_url,
+        label: label || file.name,
+        type: isVideo ? 'video' : 'image',
+        year, event,
+        fileName: file.name,
+        cloudinaryId: result.public_id,
+        createdAt: serverTimestamp()
+      });
+      done++;
+    } catch(e) {
+      console.error(e);
+      failed++;
+      toast('Failed: ' + file.name);
+    }
+  }
+
+  toast(`✅ ${done} file${done>1?'s':''} uploaded${failed?` · ${failed} failed`:''}!`);
+  closeModal('galleryModal');
+  progressWrap.style.display = 'none';
+  progressBar.style.width = '0%';
+  statusEl.textContent = '';
+  selectedGalleryFiles = [];
+  updateGalleryFileLabel();
+  loadGalleryItems(); loadDashboard();
+};
+
+window.deleteGalleryItem = async function(id) {
+  if (!confirm('Delete this media item?')) return;
+  try {
+    await deleteDoc(doc(db,'gallery',id));
+    toast('🗑 Item deleted.');
+    loadGalleryItems(); loadDashboard();
+  } catch(e) { toast('Error: ' + e.message); }
+};
+
+// ─────────────────────────────────────────────
+//  EVENTS
+// ─────────────────────────────────────────────
+const categoryEmoji = { festival:'🎉', meetup:'☕', sports:'🏏', culture:'🎭', volunteer:'🤝', other:'📌' };
+
+async function loadEvents() {
+  if (!firebaseReady) return;
+  try {
+    const snap = await getDocs(query(collection(db,'events'), orderBy('date','asc')));
+    const events = [];
+    snap.forEach(d => events.push({ ...d.data(), id: d.id }));
+    const tbody = document.getElementById('eventsTableBody');
+    if (!events.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--light);padding:32px;">No events yet. Add your first event!</td></tr>'; return; }
+    tbody.innerHTML = events.map(e => `
+      <tr>
+        <td><strong>${e.title}</strong></td>
+        <td>${e.date ? new Date(e.date).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}) : '–'} ${e.time||''}</td>
+        <td>${e.location||'–'}</td>
+        <td>${categoryEmoji[e.category]||'📌'} ${e.category||'other'}</td>
+        <td><span class="badge ${new Date(e.date) >= new Date() ? 'badge-green' : 'badge-grey'}">${new Date(e.date) >= new Date() ? 'Upcoming' : 'Past'}</span></td>
+        <td>
+          <button class="btn btn-secondary btn-sm" onclick="editEvent('${e.id}')">✏️ Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEvent('${e.id}')">🗑</button>
+        </td>
+      </tr>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+window.clearEventForm = function() {
+  ['eventTitle','eventDate','eventTime','eventLocation','eventDesc'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('eventCategory').value = 'festival';
+  document.getElementById('eventColor').value = '#FF6B00';
+  document.getElementById('editEventId').value = '';
+  document.getElementById('eventModalTitle').textContent = '📅 Add Event';
+};
+
+window.editEvent = async function(id) {
+  const snap = await getDocs(collection(db,'events'));
+  snap.forEach(d => {
+    if (d.id === id) {
+      const e = d.data();
+      document.getElementById('editEventId').value = id;
+      document.getElementById('eventTitle').value    = e.title||'';
+      document.getElementById('eventDate').value     = e.date||'';
+      document.getElementById('eventTime').value     = e.time||'';
+      document.getElementById('eventLocation').value = e.location||'';
+      document.getElementById('eventCategory').value = e.category||'festival';
+      document.getElementById('eventColor').value    = e.color||'#FF6B00';
+      document.getElementById('eventDesc').value     = e.description||'';
+      document.getElementById('eventModalTitle').textContent = '✏️ Edit Event';
+      openModal('eventModal');
+    }
+  });
+};
+
+window.saveEvent = async function() {
+  if (!firebaseReady) { toast('⚠️ Firebase not connected.'); return; }
+  const id    = document.getElementById('editEventId').value;
+  const data  = {
+    title:       document.getElementById('eventTitle').value.trim(),
+    date:        document.getElementById('eventDate').value,
+    time:        document.getElementById('eventTime').value,
+    location:    document.getElementById('eventLocation').value.trim(),
+    category:    document.getElementById('eventCategory').value,
+    color:       document.getElementById('eventColor').value,
+    description: document.getElementById('eventDesc').value.trim(),
+    updatedAt:   serverTimestamp()
+  };
+  if (!data.title || !data.date) { toast('Title and date are required.'); return; }
+  try {
+    if (id) { await updateDoc(doc(db,'events',id), data); toast('✅ Event updated!'); }
+    else    { await addDoc(collection(db,'events'), { ...data, createdAt: serverTimestamp() }); toast('✅ Event added!'); }
+    closeModal('eventModal');
+    loadEvents(); loadDashboard();
+  } catch(e) { toast('Error: ' + e.message); }
+};
+
+window.deleteEvent = async function(id) {
+  if (!confirm('Delete this event?')) return;
+  try { await deleteDoc(doc(db,'events',id)); toast('🗑 Event deleted.'); loadEvents(); loadDashboard(); }
+  catch(e) { toast('Error: ' + e.message); }
+};
+
+// ─────────────────────────────────────────────
+//  MEMBERS
+// ─────────────────────────────────────────────
+window.loadMembers = async function() {
+  if (!firebaseReady) return;
+  try {
+    const filter = document.getElementById('memberFilter').value;
+    let q = collection(db,'members');
+    const constraints = [orderBy('createdAt','desc')];
+    if (filter !== 'all') constraints.unshift(where('status','==',filter));
+    const snap = await getDocs(query(q, ...constraints));
+    const members = [];
+    snap.forEach(d => members.push({ ...d.data(), id: d.id }));
+    const tbody = document.getElementById('membersTableBody');
+    if (!members.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--light);padding:32px;">No join requests yet.</td></tr>'; return; }
+    tbody.innerHTML = members.map(m => `
+      <tr>
+        <td><strong>${m.name}</strong></td>
+        <td><a href="mailto:${m.email}" style="color:var(--saffron);">${m.email}</a></td>
+        <td>${m.createdAt ? new Date(m.createdAt.seconds*1000).toLocaleDateString('en-GB') : '–'}</td>
+        <td><span class="badge ${m.status==='active'?'badge-green':m.status==='archived'?'badge-grey':'badge-orange'}">${m.status||'pending'}</span></td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap;">
+          ${m.status!=='active'   ? `<button class="btn btn-secondary btn-sm" onclick="setMemberStatus('${m.id}','active')">✅ Activate</button>` : ''}
+          ${m.status!=='archived' ? `<button class="btn btn-danger btn-sm" onclick="setMemberStatus('${m.id}','archived')">Archive</button>` : ''}
+          <button class="btn btn-danger btn-sm" onclick="deleteMember('${m.id}')">🗑</button>
+        </td>
+      </tr>`).join('');
+  } catch(e) { console.error(e); }
+};
+
+window.setMemberStatus = async function(id, status) {
+  try { await updateDoc(doc(db,'members',id), { status }); toast('✅ Status updated.'); loadMembers(); loadDashboard(); }
+  catch(e) { toast('Error: ' + e.message); }
+};
+
+window.deleteMember = async function(id) {
+  if (!confirm('Delete this member record?')) return;
+  try { await deleteDoc(doc(db,'members',id)); toast('🗑 Deleted.'); loadMembers(); loadDashboard(); }
+  catch(e) { toast('Error: ' + e.message); }
+};
+
+window.exportMembers = async function() {
+  if (!firebaseReady) { toast('Firebase not connected.'); return; }
+  const snap = await getDocs(collection(db,'members'));
+  const rows = ['Name,Email,Status,Joined'];
+  snap.forEach(d => {
+    const m = d.data();
+    const date = m.createdAt ? new Date(m.createdAt.seconds*1000).toLocaleDateString('en-GB') : '';
+    rows.push(`"${m.name||''}","${m.email||''}","${m.status||'pending'}","${date}"`);
+  });
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'india_i_agder_members.csv';
+  a.click();
+  toast('📥 CSV exported!');
+};
+
+</script>
+</body>
+</html>
