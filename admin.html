@@ -983,6 +983,61 @@ function uploadToCloudinary(file, onProgress) {
   });
 }
 
+// ─────────────────────────────────────────────
+//  CLIENT-SIDE IMAGE RESIZE
+//  Shrinks oversized photos before they hit Cloudinary so we stay
+//  under the free-tier per-file limit and don't burn storage/bandwidth.
+//  Skips videos and images that are already small enough.
+// ─────────────────────────────────────────────
+const IMAGE_MAX_DIMENSION = 1920;   // longest side, in pixels
+const IMAGE_JPEG_QUALITY  = 0.85;   // 0–1, 0.85 is visually lossless for photos
+
+async function resizeImageForUpload(file) {
+  if (!file.type.startsWith('image/')) return file;
+  // Browsers can't decode HEIC/HEIF to canvas — let Cloudinary handle them
+  if (/heic|heif/i.test(file.type)) return file;
+
+  let objectUrl;
+  try {
+    objectUrl = URL.createObjectURL(file);
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image();
+      i.onload = () => resolve(i);
+      i.onerror = () => reject(new Error('Could not decode image'));
+      i.src = objectUrl;
+    });
+
+    const longest = Math.max(img.width, img.height);
+    // If already small enough AND under 1.5 MB, don't bother
+    if (longest <= IMAGE_MAX_DIMENSION && file.size < 1.5 * 1024 * 1024) {
+      return file;
+    }
+
+    const scale = Math.min(1, IMAGE_MAX_DIMENSION / longest);
+    const w = Math.round(img.width * scale);
+    const h = Math.round(img.height * scale);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, w, h);
+
+    const blob = await new Promise(resolve =>
+      canvas.toBlob(resolve, 'image/jpeg', IMAGE_JPEG_QUALITY)
+    );
+    if (!blob || blob.size >= file.size) return file;
+
+    const newName = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+    return new File([blob], newName, { type: 'image/jpeg', lastModified: Date.now() });
+  } catch (e) {
+    console.warn('Resize failed for', file.name, e);
+    return file; // fall back to original on any error
+  } finally {
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+  }
+}
+
 // Default the upload year to the current year
 document.getElementById('uploadYear').value = new Date().getFullYear();
 
@@ -1063,7 +1118,8 @@ window.uploadCarouselSlide = async function() {
   const progressBar = document.getElementById('carouselProgressBar');
 
   try {
-    const result = await uploadToCloudinary(file, pct => {
+    const resized = await resizeImageForUpload(file);
+    const result = await uploadToCloudinary(resized, pct => {
       progressBar.style.width = pct + '%';
     });
     const snap = await getDocs(collection(db,'carousel'));
@@ -1267,9 +1323,14 @@ window.uploadGalleryFiles = async function() {
   let failed = 0;
   for (const file of files) {
     const isVideo = file.type.startsWith('video/');
-    statusEl.textContent = `Uploading ${done+failed+1} of ${files.length}: ${file.name}`;
     try {
-      const result = await uploadToCloudinary(file, pct => {
+      let toUpload = file;
+      if (!isVideo) {
+        statusEl.textContent = `Preparing ${done+failed+1} of ${files.length}: ${file.name}`;
+        toUpload = await resizeImageForUpload(file);
+      }
+      statusEl.textContent = `Uploading ${done+failed+1} of ${files.length}: ${file.name}`;
+      const result = await uploadToCloudinary(toUpload, pct => {
         const overall = ((done + failed + pct/100) / files.length) * 100;
         progressBar.style.width = overall + '%';
       });
