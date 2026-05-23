@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hentmat — Pickup food in Arendal</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="index.html">
+      <span class="logo-mark">H</span>
+      <span class="logo-text">Hentmat</span>
+    </a>
+    <div class="topbar-loc">
+      <span class="dot"></span>
+      Arendal
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1>Skip the queue. <br/>Pick up when it's ready.</h1>
+    <p>Order from local Arendal restaurants, choose a pickup time, and walk straight to the counter.</p>
+    <div class="hero-pills">
+      <span class="pill">No delivery fees</span>
+      <span class="pill">Reserve a time slot</span>
+      <span class="pill">Pay in the app</span>
+    </div>
+  </section>
+
+  <main class="container">
+    <div class="section-head">
+      <h2>Restaurants near you</h2>
+      <span class="muted">12 open now</span>
+    </div>
+    <div id="restaurant-list" class="grid"></div>
+  </main>
+
+  <footer class="footer">
+    <span>Hentmat demo · Arendal</span>
+    <span class="muted">MVP preview · prices and times are not real</span>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+  <script>renderRestaurantList();</script>
+</body>
+</html>

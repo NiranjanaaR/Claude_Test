@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hentmat — Pickup confirmed</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="index.html">
+      <span class="logo-mark">H</span>
+      <span class="logo-text">Hentmat</span>
+    </a>
+  </header>
+
+  <main class="container confirm">
+    <div class="check">✓</div>
+    <h1>Pickup reserved</h1>
+    <p class="muted">Show this code at the counter.</p>
+
+    <div class="pickup-card">
+      <div class="pickup-code" id="pickup-code">— — — —</div>
+      <div class="pickup-meta">
+        <div>
+          <span class="muted small">Restaurant</span>
+          <strong id="confirm-restaurant">—</strong>
+        </div>
+        <div>
+          <span class="muted small">Pickup time</span>
+          <strong id="confirm-slot">—</strong>
+        </div>
+        <div>
+          <span class="muted small">Total paid</span>
+          <strong id="confirm-total">—</strong>
+        </div>
+      </div>
+    </div>
+
+    <div id="confirm-items" class="confirm-items"></div>
+
+    <a href="index.html" class="btn-primary block">Done</a>
+  </main>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+  <script>renderConfirmation();</script>
+</body>
+</html>

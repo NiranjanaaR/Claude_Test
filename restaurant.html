@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hentmat — Restaurant</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <a class="logo" href="index.html">
+      <span class="logo-mark">H</span>
+      <span class="logo-text">Hentmat</span>
+    </a>
+    <a class="back" href="index.html">← Back</a>
+  </header>
+
+  <section id="restaurant-hero" class="r-hero"></section>
+
+  <main class="container r-layout">
+    <section class="r-menu">
+      <h2>Menu</h2>
+      <div id="menu-list"></div>
+    </section>
+
+    <aside class="cart" id="cart">
+      <h3>Your order</h3>
+      <div id="cart-items" class="cart-items"></div>
+
+      <div class="slot-picker">
+        <label>Pickup time</label>
+        <div id="slot-list" class="slot-list"></div>
+      </div>
+
+      <div class="cart-total">
+        <span>Total</span>
+        <span id="cart-total">0 kr</span>
+      </div>
+      <button id="checkout-btn" class="btn-primary" disabled>Reserve pickup</button>
+      <p class="muted small">Pay in the app. Pick up at the counter — show your code.</p>
+    </aside>
+  </main>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+  <script>renderRestaurantPage();</script>
+</body>
+</html>
