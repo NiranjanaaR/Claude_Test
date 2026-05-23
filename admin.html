@@ -757,13 +757,18 @@ const CLOUDINARY_UPLOAD_PRESET = "iia_uploads";</code>
       <input type="text" id="uploadLabel" placeholder="e.g. Holi 2025 · Dance Performance">
     </div>
     <div class="form-group">
-      <label>Photo or Video Files (multiple allowed)</label>
+      <label>Photo or Video Files (multiple or whole folder)</label>
       <div class="upload-zone" id="galleryUploadZone">
-        <input type="file" id="galleryFiles" accept="image/*,video/*" multiple onchange="updateGalleryFileCount(this)">
+        <input type="file" id="galleryFiles" accept="image/*,video/*" multiple>
         <div class="icon">📁</div>
-        <p id="galleryFileLabel">Drop files here or <span>browse</span></p>
+        <p id="galleryFileLabel">Drop files or a folder here, or <span>browse</span></p>
         <p style="font-size:11px;margin-top:4px;">JPG, PNG, MP4, MOV supported</p>
       </div>
+      <input type="file" id="galleryFolder" webkitdirectory directory multiple style="display:none;">
+      <button type="button" id="pickFolderBtn"
+        style="margin-top:10px;background:transparent;border:1.5px solid var(--saffron);color:var(--saffron);padding:8px 18px;border-radius:50px;font-size:12px;font-family:'Poppins',sans-serif;font-weight:600;cursor:pointer;">
+        📂 Or pick a whole folder
+      </button>
     </div>
     <div class="progress-wrap" id="galleryProgress" style="display:none">
       <div class="progress-bar" id="galleryProgressBar"></div>
@@ -1148,15 +1153,104 @@ function renderGalleryGrid(items) {
     </div>`).join('');
 }
 
-window.updateGalleryFileCount = function(input) {
-  const n = input.files.length;
+// ─────────────────────────────────────────────
+//  GALLERY FILE SELECTION (files, folders, drag-and-drop)
+// ─────────────────────────────────────────────
+// Files staged for upload — survives across the various input sources
+let selectedGalleryFiles = [];
+
+function isMedia(file) {
+  return file && (file.type.startsWith('image/') || file.type.startsWith('video/'));
+}
+
+function updateGalleryFileLabel() {
+  const n = selectedGalleryFiles.length;
   document.getElementById('galleryFileLabel').innerHTML =
-    n > 0 ? `<span style="color:var(--saffron);font-weight:600;">${n} file${n>1?'s':''} selected</span>` : `Drop files here or <span>browse</span>`;
-};
+    n > 0
+      ? `<span style="color:var(--saffron);font-weight:600;">${n} file${n>1?'s':''} selected</span>`
+      : `Drop files or a folder here, or <span>browse</span>`;
+}
+
+function addToGallerySelection(files) {
+  for (const f of files) if (isMedia(f)) selectedGalleryFiles.push(f);
+  updateGalleryFileLabel();
+}
+
+// Walk a FileSystemEntry tree from a drag-and-drop folder
+function readEntriesRecursively(entry) {
+  return new Promise(resolve => {
+    if (entry.isFile) {
+      entry.file(file => resolve([file]), () => resolve([]));
+    } else if (entry.isDirectory) {
+      const reader = entry.createReader();
+      const all = [];
+      const readBatch = () => {
+        reader.readEntries(async batch => {
+          if (!batch.length) { resolve(all); return; }
+          for (const child of batch) {
+            const childFiles = await readEntriesRecursively(child);
+            all.push(...childFiles);
+          }
+          readBatch(); // readEntries returns at most ~100 entries at a time
+        }, () => resolve(all));
+      };
+      readBatch();
+    } else { resolve([]); }
+  });
+}
+
+// Wire up the file input, folder input, the "pick folder" button,
+// and drag-and-drop on the upload zone.
+(function initGalleryUploadInputs() {
+  const fileInput   = document.getElementById('galleryFiles');
+  const folderInput = document.getElementById('galleryFolder');
+  const folderBtn   = document.getElementById('pickFolderBtn');
+  const zone        = document.getElementById('galleryUploadZone');
+  if (!fileInput || !zone) return;
+
+  fileInput.addEventListener('change', () => {
+    addToGallerySelection(fileInput.files);
+    fileInput.value = '';
+  });
+  folderInput.addEventListener('change', () => {
+    addToGallerySelection(folderInput.files);
+    folderInput.value = '';
+  });
+  folderBtn.addEventListener('click', e => {
+    e.preventDefault(); e.stopPropagation();
+    folderInput.click();
+  });
+
+  // Drag-and-drop — accept files AND folders
+  ['dragenter','dragover'].forEach(ev => zone.addEventListener(ev, e => {
+    e.preventDefault(); e.stopPropagation();
+    zone.classList.add('drag');
+  }));
+  ['dragleave','drop'].forEach(ev => zone.addEventListener(ev, e => {
+    e.preventDefault(); e.stopPropagation();
+    zone.classList.remove('drag');
+  }));
+  zone.addEventListener('drop', async e => {
+    const items = e.dataTransfer.items;
+    if (items && items.length && items[0].webkitGetAsEntry) {
+      const collected = [];
+      for (const item of items) {
+        const entry = item.webkitGetAsEntry();
+        if (entry) {
+          const files = await readEntriesRecursively(entry);
+          collected.push(...files);
+        }
+      }
+      addToGallerySelection(collected);
+    } else if (e.dataTransfer.files) {
+      addToGallerySelection(e.dataTransfer.files);
+    }
+  });
+})();
 
 window.uploadGalleryFiles = async function() {
   if (!firebaseReady) { toast('⚠️ Firebase not connected. See Setup tab.'); return; }
-  const files = document.getElementById('galleryFiles').files;
+  const files = selectedGalleryFiles;
   const year  = document.getElementById('uploadYear').value.trim();
   const event = document.getElementById('uploadEvent').value.trim();
   const label = document.getElementById('uploadLabel').value.trim();
@@ -1201,8 +1295,8 @@ window.uploadGalleryFiles = async function() {
   progressWrap.style.display = 'none';
   progressBar.style.width = '0%';
   statusEl.textContent = '';
-  document.getElementById('galleryFiles').value = '';
-  document.getElementById('galleryFileLabel').innerHTML = 'Drop files here or <span>browse</span>';
+  selectedGalleryFiles = [];
+  updateGalleryFileLabel();
   loadGalleryItems(); loadDashboard();
 };
 
