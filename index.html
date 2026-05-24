@@ -217,14 +217,15 @@
   ──────────────────────────────────────────────────────────────*/
   @media (max-width: 768px) {
     .hero {
-      height: calc(100vh - 60px);
-      aspect-ratio: unset;
+      height: auto;
+      aspect-ratio: 16/9;
       min-height: unset;
       max-height: unset;
       margin-top: 60px;
     }
     .carousel-slide img.slide-img {
-      object-fit: contain;   /* show full image, blurred backdrop fills gaps */
+      object-fit: cover;
+      object-position: center bottom;
     }
     .carousel-prev, .carousel-next {
       width: 32px; height: 32px; font-size: 13px; border-width: 1.5px;
