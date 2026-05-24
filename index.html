@@ -742,6 +742,16 @@
     border: 1px solid var(--border); box-shadow: 0 4px 20px rgba(26,10,0,0.07);
     flex-shrink: 0;
   }
+  @media (max-width: 768px) {
+    .testimonials-carousel {
+      flex-direction: column; overflow-x: visible;
+      scroll-snap-type: none;
+    }
+    .testimonial-card {
+      min-width: unset; width: 100%;
+      padding: 24px; flex-shrink: 1;
+    }
+  }
   .testimonial-card .quote { font-size: 36px; color: var(--saffron); line-height: 1; margin-bottom: 12px; }
   .testimonial-card p {
     font-size: 14px; color: var(--light-text); line-height: 1.7;
