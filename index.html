@@ -848,8 +848,8 @@
   @media (max-width: 900px) {
     section { padding: 70px 24px; }
     .about-grid { grid-template-columns: 1fr; gap: 40px; }
-    .events-layout { grid-template-columns: 1fr; height: auto; }
-    .events-right { height: 520px; }
+    .events-layout { grid-template-columns: 1fr; height: auto; gap: 24px; }
+    .events-right { height: auto; min-height: 120px; }
     .calendar-widget { height: auto; }
     .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
     .gallery-item.featured { grid-column: span 1; grid-row: span 1; }
@@ -1061,7 +1061,7 @@
     <!-- Events List -->
 <div class="events-right">
   <div class="events-list">
-    <p style="color:rgba(255,255,255,0.5);text-align:center;padding:24px 0;">Loading upcoming events…</p>
+    <p style="color:var(--light-text);text-align:center;padding:24px 0;">Loading upcoming events…</p>
   </div>
   <a href="#join" class="btn btn-primary" style="text-align:center; display:block; margin-top:8px;">
     Get Event Notifications →
@@ -1900,7 +1900,7 @@ if (FIREBASE_CONFIG.apiKey === "PASTE_YOUR_FIREBASE_CONFIG_HERE") {
           const list = document.querySelector('.events-list');
           if (!list) return;
           if (!events.length) {
-            list.innerHTML = '<p style="color:rgba(255,255,255,0.5);text-align:center;padding:24px 0;">No upcoming events yet. Check back soon!</p>';
+            list.innerHTML = '<p style="color:#6B4226;text-align:center;padding:24px 0;">No upcoming events yet. Check back soon!</p>';
             return;
           }
 
