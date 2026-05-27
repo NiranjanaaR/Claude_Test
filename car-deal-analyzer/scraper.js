@@ -1,3 +1,4 @@
+const puppeteer = require('puppeteer');
 const cheerio = require('cheerio');
 
 const FINN_BRAND_CODES = {
@@ -16,6 +17,23 @@ const FINN_FUEL_CODES = {
 const FINN_TRANSMISSION_CODES = {
   'manuell': '1', 'automat': '2',
 };
+
+let browserInstance = null;
+
+async function getBrowser() {
+  if (browserInstance && browserInstance.connected) return browserInstance;
+  browserInstance = await puppeteer.launch({
+    headless: 'new',
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-blink-features=AutomationControlled',
+      '--disable-infobars',
+      '--window-size=1920,1080',
+    ],
+  });
+  return browserInstance;
+}
 
 function buildFinnUrl(params) {
   const base = 'https://www.finn.no/car/used/search.html';
@@ -44,46 +62,140 @@ function buildFinnUrl(params) {
   return `${base}?${query.toString()}`;
 }
 
+async function scrapeFinn(params) {
+  const url = buildFinnUrl(params);
+  console.log('Fetching FINN.no with Puppeteer:', url);
+
+  let browser;
+  let page;
+  try {
+    browser = await getBrowser();
+    page = await browser.newPage();
+
+    await page.setUserAgent(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
+    );
+    await page.setExtraHTTPHeaders({ 'Accept-Language': 'nb-NO,nb;q=0.9,no;q=0.8' });
+    await page.setViewport({ width: 1920, height: 1080 });
+
+    await page.evaluateOnNewDocument(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => false });
+    });
+
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+
+    // Accept cookies if a consent dialog appears
+    try {
+      const consentBtn = await page.waitForSelector(
+        'button[title*="Godta"], button[title*="godta"], button[title*="Accept"], button:has-text("Godta alle"), [class*="consent"] button, #onetrust-accept-btn-handler',
+        { timeout: 3000 }
+      );
+      if (consentBtn) await consentBtn.click();
+      await new Promise(r => setTimeout(r, 1000));
+    } catch (_) { /* no consent dialog */ }
+
+    await new Promise(r => setTimeout(r, 2000));
+
+    // Try extracting data from the page's JavaScript context first
+    const jsonListings = await page.evaluate(() => {
+      const results = [];
+
+      // Look for data in window/global state
+      const scripts = document.querySelectorAll('script');
+      for (const script of scripts) {
+        const text = script.textContent || '';
+        if (text.includes('"docs"') && text.includes('"heading"')) {
+          try {
+            const match = text.match(/"docs"\s*:\s*(\[[\s\S]*?\])\s*[,}]/);
+            if (match) {
+              const docs = JSON.parse(match[1]);
+              for (const doc of docs) {
+                if (doc.heading || doc.title) {
+                  results.push(doc);
+                }
+              }
+            }
+          } catch (e) { /* continue */ }
+        }
+      }
+
+      // Check __NEXT_DATA__
+      const nextData = document.getElementById('__NEXT_DATA__');
+      if (nextData && results.length === 0) {
+        try {
+          const data = JSON.parse(nextData.textContent);
+          const findDocs = (obj) => {
+            if (!obj || typeof obj !== 'object') return null;
+            if (Array.isArray(obj.docs)) return obj.docs;
+            for (const key of Object.keys(obj)) {
+              const r = findDocs(obj[key]);
+              if (r) return r;
+            }
+            return null;
+          };
+          const docs = findDocs(data);
+          if (docs) results.push(...docs);
+        } catch (e) { /* continue */ }
+      }
+
+      return results;
+    });
+
+    if (jsonListings && jsonListings.length > 0) {
+      console.log(`Found ${jsonListings.length} listings via embedded JSON`);
+      const parsed = jsonListings.map(extractFromJson).filter(Boolean);
+      await page.close();
+      return parsed;
+    }
+
+    // Fallback: scrape rendered HTML
+    const html = await page.content();
+    await page.close();
+
+    const listings = parseSearchResults(html);
+    console.log(`Parsed ${listings.length} listings from rendered HTML`);
+    return listings;
+
+  } catch (err) {
+    console.error('Puppeteer scrape failed:', err.message);
+    if (page) await page.close().catch(() => {});
+    return [];
+  }
+}
+
+async function scrapeListingDetail(listingUrl) {
+  if (!listingUrl || !listingUrl.includes('finn.no')) return {};
+
+  let page;
+  try {
+    const browser = await getBrowser();
+    page = await browser.newPage();
+    await page.setUserAgent(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
+    );
+    await page.goto(listingUrl, { waitUntil: 'networkidle2', timeout: 20000 });
+
+    const detail = await page.evaluate(() => {
+      const descEl = document.querySelector('[class*="description"], [data-testid*="description"]');
+      const description = descEl ? descEl.innerText.trim() : '';
+      const bodyText = document.body.innerText;
+      const euMatch = bodyText.match(/EU.?(?:godkjent|kontroll).*?(\d{1,2}[./]\d{1,2}[./]\d{2,4}|\d{4})/i);
+      return { description, euDate: euMatch ? euMatch[1] : '' };
+    });
+
+    await page.close();
+    return detail;
+  } catch (err) {
+    if (page) await page.close().catch(() => {});
+    return {};
+  }
+}
+
 function parseSearchResults(html) {
   const $ = cheerio.load(html);
   const listings = [];
 
-  const scriptTags = $('script').toArray();
-  for (const script of scriptTags) {
-    const content = $(script).html() || '';
-    if (content.includes('"docs"') && content.includes('"heading"')) {
-      try {
-        const jsonMatch = content.match(/\{[\s\S]*"docs"\s*:\s*\[[\s\S]*\][\s\S]*\}/);
-        if (jsonMatch) {
-          const data = JSON.parse(jsonMatch[0]);
-          if (data.docs && Array.isArray(data.docs)) {
-            for (const doc of data.docs) {
-              const listing = extractFromJson(doc);
-              if (listing) listings.push(listing);
-            }
-            if (listings.length > 0) return listings;
-          }
-        }
-      } catch (e) { /* continue to HTML parsing */ }
-    }
-  }
-
-  const nextDataScript = $('#__NEXT_DATA__');
-  if (nextDataScript.length) {
-    try {
-      const nextData = JSON.parse(nextDataScript.html());
-      const searchResult = findDeep(nextData, 'docs') || findDeep(nextData, 'ads');
-      if (Array.isArray(searchResult)) {
-        for (const doc of searchResult) {
-          const listing = extractFromJson(doc);
-          if (listing) listings.push(listing);
-        }
-        if (listings.length > 0) return listings;
-      }
-    } catch (e) { /* continue to HTML parsing */ }
-  }
-
-  $('article, [data-testid*="ad"], .ads__unit, .sf-search-ad, a[href*="/car/used/ad.html"]').each((_, el) => {
+  $('article, [data-testid*="ad"], .sf-search-ad, [class*="AdCard"], [class*="ad-card"]').each((_, el) => {
     const $el = $(el);
     const listing = extractFromHtml($, $el);
     if (listing && listing.title && listing.price > 0) {
@@ -92,10 +204,10 @@ function parseSearchResults(html) {
   });
 
   if (listings.length === 0) {
-    $('a[href*="finnkode"]').each((_, el) => {
-      const $el = $(el).closest('article, div, li');
-      if ($el.length) {
-        const listing = extractFromHtml($, $el);
+    $('a[href*="/car/used/ad.html"], a[href*="finnkode"]').each((_, el) => {
+      const $parent = $(el).closest('article, section, div[class]');
+      if ($parent.length) {
+        const listing = extractFromHtml($, $parent);
         if (listing && listing.title && listing.price > 0) {
           listings.push(listing);
         }
@@ -186,81 +298,14 @@ function extractFromHtml($, $el) {
   return { id: '', title, price, year, mileage, fuel, transmission, location: '', link, image: img, source: 'finn' };
 }
 
-function findDeep(obj, key) {
-  if (!obj || typeof obj !== 'object') return null;
-  if (obj[key]) return obj[key];
-  for (const k of Object.keys(obj)) {
-    const result = findDeep(obj[k], key);
-    if (result) return result;
-  }
-  return null;
-}
-
-async function scrapeFinn(params) {
-  const url = buildFinnUrl(params);
-  console.log('Fetching FINN.no:', url);
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
-
-  try {
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'nb-NO,nb;q=0.9,no;q=0.8,en;q=0.5',
-        'Accept-Encoding': 'identity',
-      },
-      signal: controller.signal,
-      redirect: 'follow',
-    });
-
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      console.error('FINN.no returned status:', response.status);
-      return [];
-    }
-
-    const html = await response.text();
-    const listings = parseSearchResults(html);
-    console.log(`Parsed ${listings.length} listings from FINN.no`);
-    return listings;
-  } catch (err) {
-    clearTimeout(timeout);
-    console.error('Failed to fetch FINN.no:', err.message);
-    return [];
+async function closeBrowser() {
+  if (browserInstance) {
+    await browserInstance.close().catch(() => {});
+    browserInstance = null;
   }
 }
 
-async function scrapeListingDetail(url) {
-  if (!url) return {};
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
+process.on('exit', () => { if (browserInstance) browserInstance.close().catch(() => {}); });
+process.on('SIGINT', async () => { await closeBrowser(); process.exit(0); });
 
-  try {
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-        'Accept-Language': 'nb-NO,nb;q=0.9',
-      },
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-    if (!response.ok) return {};
-
-    const html = await response.text();
-    const $ = cheerio.load(html);
-    const description = $('[class*="description"], [data-testid*="description"], .u-word-break').text().trim();
-    const allText = $('body').text();
-    const euMatch = allText.match(/EU.?(?:godkjent|kontroll).*?(\d{1,2}[.\/]\d{1,2}[.\/]\d{2,4}|\d{4})/i);
-    const euDate = euMatch ? euMatch[1] : '';
-
-    return { description, euDate };
-  } catch (err) {
-    clearTimeout(timeout);
-    return {};
-  }
-}
-
-module.exports = { scrapeFinn, scrapeListingDetail, buildFinnUrl, FINN_BRAND_CODES, FINN_FUEL_CODES };
+module.exports = { scrapeFinn, scrapeListingDetail, buildFinnUrl, closeBrowser, FINN_BRAND_CODES, FINN_FUEL_CODES };

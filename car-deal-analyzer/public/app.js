@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (value) params.set(key, value);
     }
 
-    showStatus('loading', '<span class="spinner"></span> Søker på FINN.no og analyserer annonser...');
+    showStatus('loading', '<span class="spinner"></span> Åpner FINN.no i bakgrunnen og henter annonser... (kan ta 15-30 sek første gang)');
     resultsEl.innerHTML = '';
     summaryEl.classList.add('hidden');
     resultFilters.classList.add('hidden');
