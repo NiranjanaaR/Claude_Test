@@ -213,7 +213,7 @@
 
     function buildAiPrompt(listing) {
       var parts = [
-        'Jeg vurderer å kjøpe denne bruktbilen fra FINN.no. Analyser den grundig og gi meg råd.\n',
+        'Jeg vurderer å kjøpe denne bruktbilen for videresalg. Analyser den grundig.\n',
         'BIL: ' + listing.title,
         'PRIS: ' + formatKr(listing.price),
         'ÅRSMODELL: ' + (listing.year || 'Ukjent'),
@@ -221,13 +221,13 @@
         'DRIVSTOFF: ' + (listing.fuel || 'Ukjent'),
         'GIRKASSE: ' + (listing.transmission || 'Ukjent'),
       ];
+      if (listing.link) {
+        parts.push('FINN.no LENKE: ' + listing.link);
+      }
       if (listing.description) {
         parts.push('\nBESKRIVELSE FRA ANNONSEN:\n"' + listing.description + '"');
       }
-      if (listing.link) {
-        parts.push('\nFINN.no LENKE: ' + listing.link);
-      }
-      parts.push('\nVÅR ANALYSE:');
+      parts.push('\nVÅR AUTOMATISKE ANALYSE:');
       parts.push('- Estimert markedsverdi: ' + formatKr(listing.marketValue));
       parts.push('- Deal Score: ' + (listing.dealScore || 'N/A') + '/10');
       parts.push('- Estimert fortjeneste ved videresalg: ' + formatKr(listing.estimatedProfit));
@@ -237,12 +237,13 @@
         if (listing.descriptionAnalysis.negativeFlags && listing.descriptionAnalysis.negativeFlags.length > 0)
           parts.push('- Negative signaler: ' + listing.descriptionAnalysis.negativeFlags.join(', '));
       }
-      parts.push('\nVennligst gi meg:');
-      parts.push('1. Er dette en god deal? Hvorfor/hvorfor ikke?');
-      parts.push('2. Kjente problemer med denne modellen/motoren/årgangen');
-      parts.push('3. Hva bør jeg sjekke spesielt ved visning?');
-      parts.push('4. Realistisk videresalgspris etter eventuell oppussing');
-      parts.push('5. Din anbefaling: kjøp, forhandle ned, eller unngå?');
+      parts.push('\nJeg ønsker å kjøpe denne bilen billig og selge den videre med fortjeneste.');
+      parts.push('Vennligst gi meg:');
+      parts.push('1. Er denne bilen egnet for videresalg? Hva er realistisk fortjenestepotensial?');
+      parts.push('2. Hva er de kjente svakhetene/problemene med denne modellen og årgangen?');
+      parts.push('3. Hva bør jeg se etter og teste ved visning for å avdekke skjulte problemer?');
+      parts.push('4. Hva er realistisk videresalgspris etter eventuell oppussing/reparasjon?');
+      parts.push('5. Konklusjon: Bør jeg kjøpe denne for videresalg, prute prisen ned, eller gå videre?');
       return parts.join('\n');
     }
 
@@ -257,25 +258,61 @@
         gemini: 'https://gemini.google.com/app',
       };
 
-      navigator.clipboard.writeText(prompt).then(function() {
-        if (service === 'copy') {
-          showToast('Prompt kopiert! Lim inn i din foretrukne AI-chat.');
-        } else {
-          window.open(urls[service], '_blank');
-          showToast('Prompt kopiert! Lim inn (Ctrl+V) i chatten som åpnes.');
-        }
-      }).catch(function() {
-        var ta = document.createElement('textarea');
-        ta.value = prompt;
-        document.body.appendChild(ta);
-        ta.select();
-        document.execCommand('copy');
-        ta.remove();
-        if (service !== 'copy') window.open(urls[service], '_blank');
-        showToast('Prompt kopiert! Lim inn (Ctrl+V) i chatten.');
+      // Show modal with prompt preview
+      showPromptModal(prompt, service, urls[service]);
+      document.querySelectorAll('.ai-menu').forEach(function(m) { m.style.display = 'none'; });
+    }
+
+    function showPromptModal(prompt, service, url) {
+      var existing = document.getElementById('bildeal-modal');
+      if (existing) existing.remove();
+
+      var serviceNames = { chatgpt: 'ChatGPT', claude: 'Claude', gemini: 'Gemini', copy: '' };
+      var serviceName = serviceNames[service] || '';
+
+      var modal = document.createElement('div');
+      modal.id = 'bildeal-modal';
+      modal.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);padding:1rem';
+
+      modal.innerHTML = '<div style="background:white;border-radius:12px;max-width:640px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.3)">'
+        +'<div style="padding:1.25rem 1.5rem;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center">'
+        +'<h3 style="margin:0;font-size:1.1rem">'+(service==='copy'?'Prompt klar til kopiering':'Denne teksten sendes til '+serviceName)+'</h3>'
+        +'<button onclick="document.getElementById(\'bildeal-modal\').remove()" style="border:none;background:none;font-size:1.5rem;cursor:pointer;color:#94a3b8;line-height:1">&times;</button>'
+        +'</div>'
+        +'<div style="padding:1rem 1.5rem;overflow-y:auto;flex:1">'
+        +'<pre style="white-space:pre-wrap;word-wrap:break-word;font-size:0.82rem;line-height:1.6;background:#f8fafc;padding:1rem;border-radius:8px;border:1px solid #e2e8f0;margin:0;font-family:-apple-system,sans-serif">'+esc(prompt)+'</pre>'
+        +'</div>'
+        +'<div style="padding:1rem 1.5rem;border-top:1px solid #e2e8f0;display:flex;gap:0.75rem;justify-content:flex-end">'
+        +'<button onclick="document.getElementById(\'bildeal-modal\').remove()" style="padding:8px 16px;border:1px solid #e2e8f0;background:white;border-radius:6px;cursor:pointer;font-size:0.9rem">Avbryt</button>'
+        +'<button id="bildeal-copy-send" style="padding:8px 20px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;border-radius:6px;cursor:pointer;font-size:0.9rem;font-weight:600">'
+        +(service==='copy'?'Kopier tekst':'Kopier og åpne '+serviceName)+'</button>'
+        +'</div></div>';
+
+      document.body.appendChild(modal);
+
+      modal.addEventListener('click', function(e) {
+        if (e.target === modal) modal.remove();
       });
 
-      document.querySelectorAll('.ai-menu').forEach(function(m) { m.style.display = 'none'; });
+      document.getElementById('bildeal-copy-send').addEventListener('click', function() {
+        navigator.clipboard.writeText(prompt).then(function() {
+          if (service !== 'copy' && url) window.open(url, '_blank');
+          modal.remove();
+          showToast(service === 'copy'
+            ? 'Prompt kopiert til utklippstavlen!'
+            : 'Prompt kopiert! Lim inn med Ctrl+V i ' + serviceName + '-chatten.');
+        }).catch(function() {
+          var ta = document.createElement('textarea');
+          ta.value = prompt;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+          if (service !== 'copy' && url) window.open(url, '_blank');
+          modal.remove();
+          showToast('Prompt kopiert! Lim inn med Ctrl+V.');
+        });
+      });
     }
 
     function showToast(msg) {
