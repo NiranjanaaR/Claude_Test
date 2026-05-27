@@ -1,8 +1,7 @@
 const express = require('express');
 const path = require('path');
-const { scrapeFinn } = require('./scraper');
-const { analyzeListings } = require('./analyzer');
-const { getMockListings } = require('./mock-data');
+const { scrapeFinn, scrapeListingDetail } = require('./scraper');
+const { analyzeListings, analyzeManualInput } = require('./analyzer');
 
 const app = express();
 const PORT = 3000;
@@ -13,19 +12,46 @@ app.use(express.json());
 app.get('/api/search', async (req, res) => {
   const params = req.query;
   try {
-    let listings = await scrapeFinn(params);
+    const listings = await scrapeFinn(params);
     if (!listings || listings.length === 0) {
-      listings = getMockListings(params);
-      const analyzed = analyzeListings(listings);
-      return res.json({ source: 'mock', note: 'FINN.no var utilgjengelig — viser eksempeldata', listings: analyzed });
+      return res.json({
+        source: 'none',
+        note: 'Ingen resultater fra FINN.no. Prøv andre filtre, eller legg inn en bil manuelt.',
+        listings: [],
+      });
     }
     const analyzed = analyzeListings(listings);
-    res.json({ source: 'finn', listings: analyzed });
+    res.json({ source: 'finn', count: analyzed.length, listings: analyzed });
   } catch (err) {
     console.error('Scrape error:', err.message);
-    const listings = getMockListings(params);
-    const analyzed = analyzeListings(listings);
-    res.json({ source: 'mock', note: 'Kunne ikke nå FINN.no — viser eksempeldata', listings: analyzed });
+    res.json({
+      source: 'error',
+      note: 'Kunne ikke nå FINN.no akkurat nå. Prøv igjen senere, eller legg inn en bil manuelt.',
+      listings: [],
+    });
+  }
+});
+
+app.get('/api/detail', async (req, res) => {
+  const { url } = req.query;
+  if (!url || !url.includes('finn.no')) {
+    return res.status(400).json({ error: 'Ugyldig FINN.no URL' });
+  }
+  try {
+    const detail = await scrapeListingDetail(url);
+    res.json(detail);
+  } catch (err) {
+    res.json({ description: '', euDate: '' });
+  }
+});
+
+app.post('/api/analyze', (req, res) => {
+  try {
+    const result = analyzeManualInput(req.body);
+    res.json(result);
+  } catch (err) {
+    console.error('Analysis error:', err.message);
+    res.status(500).json({ error: 'Analysefeil' });
   }
 });
 

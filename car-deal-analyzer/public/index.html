@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BilDeal — FINN.no Bilanalyse</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <h1>BilDeal</h1>
+      <p class="subtitle">Finn undervurderte biler på FINN.no — analyser pris, risiko og fortjeneste</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="tabs">
+      <button class="tab active" data-tab="search">Søk FINN.no</button>
+      <button class="tab" data-tab="manual">Manuell analyse</button>
+    </div>
+
+    <section id="search-panel" class="panel active">
+      <form id="search-form" class="filter-grid">
+        <div class="filter-group">
+          <label for="brand">Merke</label>
+          <select id="brand" name="brand">
+            <option value="">Alle merker</option>
+            <option value="audi">Audi</option>
+            <option value="bmw">BMW</option>
+            <option value="citroen">Citroën</option>
+            <option value="ford">Ford</option>
+            <option value="honda">Honda</option>
+            <option value="hyundai">Hyundai</option>
+            <option value="kia">Kia</option>
+            <option value="mazda">Mazda</option>
+            <option value="mercedes-benz">Mercedes-Benz</option>
+            <option value="mitsubishi">Mitsubishi</option>
+            <option value="nissan">Nissan</option>
+            <option value="opel">Opel</option>
+            <option value="peugeot">Peugeot</option>
+            <option value="renault">Renault</option>
+            <option value="seat">Seat</option>
+            <option value="skoda">Skoda</option>
+            <option value="subaru">Subaru</option>
+            <option value="suzuki">Suzuki</option>
+            <option value="tesla">Tesla</option>
+            <option value="toyota">Toyota</option>
+            <option value="volkswagen">Volkswagen</option>
+            <option value="volvo">Volvo</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="price_from">Pris fra (kr)</label>
+          <input type="number" id="price_from" name="price_from" placeholder="f.eks. 50000">
+        </div>
+        <div class="filter-group">
+          <label for="price_to">Pris til (kr)</label>
+          <input type="number" id="price_to" name="price_to" placeholder="f.eks. 200000">
+        </div>
+        <div class="filter-group">
+          <label for="year_from">Årsmodell fra</label>
+          <input type="number" id="year_from" name="year_from" placeholder="f.eks. 2015">
+        </div>
+        <div class="filter-group">
+          <label for="year_to">Årsmodell til</label>
+          <input type="number" id="year_to" name="year_to" placeholder="f.eks. 2023">
+        </div>
+        <div class="filter-group">
+          <label for="mileage_to">Maks kilometerstand</label>
+          <input type="number" id="mileage_to" name="mileage_to" placeholder="f.eks. 150000">
+        </div>
+        <div class="filter-group">
+          <label for="fuel">Drivstoff</label>
+          <select id="fuel" name="fuel">
+            <option value="">Alle</option>
+            <option value="bensin">Bensin</option>
+            <option value="diesel">Diesel</option>
+            <option value="elektrisk">Elektrisk</option>
+            <option value="hybrid">Hybrid</option>
+            <option value="pluginhybrid">Plugin Hybrid</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="transmission">Girkasse</label>
+          <select id="transmission" name="transmission">
+            <option value="">Alle</option>
+            <option value="automat">Automat</option>
+            <option value="manuell">Manuell</option>
+          </select>
+        </div>
+        <div class="filter-actions">
+          <button type="submit" class="btn btn-primary">Søk og analyser</button>
+          <button type="reset" class="btn btn-secondary">Nullstill</button>
+        </div>
+      </form>
+
+      <div id="result-filters" class="result-filters hidden">
+        <h3>Filtrer resultater</h3>
+        <div class="result-filter-grid">
+          <div class="filter-group">
+            <label for="filter-ranking">Vurdering</label>
+            <select id="filter-ranking">
+              <option value="">Alle</option>
+              <option value="good">Godt Kjøp</option>
+              <option value="risky">Risikabelt</option>
+              <option value="avoid">Unngå</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="filter-min-profit">Min. fortjeneste (kr)</label>
+            <input type="number" id="filter-min-profit" placeholder="f.eks. 10000">
+          </div>
+          <div class="filter-group">
+            <label for="filter-max-risk">Maks risikoscore</label>
+            <input type="number" id="filter-max-risk" placeholder="0-100" min="0" max="100">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="manual-panel" class="panel">
+      <form id="manual-form" class="manual-grid">
+        <div class="filter-group">
+          <label for="m-title">Tittel / Bilnavn</label>
+          <input type="text" id="m-title" name="title" placeholder="f.eks. Toyota Yaris 1.5 Hybrid">
+        </div>
+        <div class="filter-group">
+          <label for="m-price">Pris (kr)</label>
+          <input type="number" id="m-price" name="price" required placeholder="f.eks. 149000">
+        </div>
+        <div class="filter-group">
+          <label for="m-year">Årsmodell</label>
+          <input type="number" id="m-year" name="year" placeholder="f.eks. 2018">
+        </div>
+        <div class="filter-group">
+          <label for="m-mileage">Kilometerstand</label>
+          <input type="number" id="m-mileage" name="mileage" placeholder="f.eks. 85000">
+        </div>
+        <div class="filter-group">
+          <label for="m-brand">Merke</label>
+          <input type="text" id="m-brand" name="brand" placeholder="f.eks. Toyota">
+        </div>
+        <div class="filter-group">
+          <label for="m-model">Modell</label>
+          <input type="text" id="m-model" name="model" placeholder="f.eks. Yaris">
+        </div>
+        <div class="filter-group">
+          <label for="m-fuel">Drivstoff</label>
+          <select id="m-fuel" name="fuel">
+            <option value="">Velg</option>
+            <option value="Bensin">Bensin</option>
+            <option value="Diesel">Diesel</option>
+            <option value="Elektrisk">Elektrisk</option>
+            <option value="Hybrid">Hybrid</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="m-transmission">Girkasse</label>
+          <select id="m-transmission" name="transmission">
+            <option value="">Velg</option>
+            <option value="Automat">Automat</option>
+            <option value="Manuell">Manuell</option>
+          </select>
+        </div>
+        <div class="filter-group full-width">
+          <label for="m-description">Beskrivelse fra annonsen</label>
+          <textarea id="m-description" name="description" rows="4" placeholder="Lim inn beskrivelsen fra FINN.no-annonsen her. Systemet vil analysere teksten for risikofaktorer som 'selges som den er', 'motorlys', 'rust', osv."></textarea>
+        </div>
+        <div class="filter-group full-width">
+          <label for="m-link">FINN.no-lenke (valgfritt)</label>
+          <input type="url" id="m-link" name="link" placeholder="https://www.finn.no/car/used/ad.html?finnkode=...">
+        </div>
+        <div class="filter-actions full-width">
+          <button type="submit" class="btn btn-primary">Analyser bil</button>
+          <button type="reset" class="btn btn-secondary">Tøm skjema</button>
+        </div>
+      </form>
+    </section>
+
+    <div id="status-bar" class="status-bar hidden"></div>
+
+    <section id="summary" class="summary hidden">
+      <div class="summary-card good">
+        <span class="summary-count" id="count-good">0</span>
+        <span class="summary-label">Godt Kjøp</span>
+      </div>
+      <div class="summary-card risky">
+        <span class="summary-count" id="count-risky">0</span>
+        <span class="summary-label">Risikabelt</span>
+      </div>
+      <div class="summary-card avoid">
+        <span class="summary-count" id="count-avoid">0</span>
+        <span class="summary-label">Unngå</span>
+      </div>
+      <div class="summary-card total">
+        <span class="summary-count" id="count-total">0</span>
+        <span class="summary-label">Totalt</span>
+      </div>
+    </section>
+
+    <section id="results" class="results"></section>
+  </main>
+
+  <footer>
+    <p>BilDeal — Ikke et offisielt FINN.no-verktøy. Estimater er veiledende og basert på markedsdata.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
