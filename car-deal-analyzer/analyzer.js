@@ -153,22 +153,33 @@ function detectRisks(description) {
   };
 }
 
+const { generateRecommendation, getBrandReliability, getModelIssues } = require('./car-knowledge');
+
 function analyzeListing(listing) {
   const marketValue = estimateMarketValue(listing);
   const risk = detectRisks(listing.description || '');
+  const brand = extractBrand(listing.title) || 'ukjent';
   const priceDiff = marketValue - listing.price;
   const priceDiffPercent = listing.price > 0 ? Math.round((priceDiff / listing.price) * 100) : 0;
 
-  const avgRepairCost = Math.round((risk.estimatedRepairMin + risk.estimatedRepairMax) / 2);
+  // Factor in model-specific known issues to repair cost
+  const modelIssues = getModelIssues(brand, listing.title, listing.year);
+  const modelRiskCost = modelIssues
+    .filter(i => i.severity === 'high' || i.severity === 'medium')
+    .reduce((sum, i) => sum + (i.repairCost[0] + i.repairCost[1]) / 2 * (i.severity === 'high' ? 0.4 : 0.15), 0);
+
+  const avgRepairCost = Math.round((risk.estimatedRepairMin + risk.estimatedRepairMax) / 2 + modelRiskCost);
   const resaleValue = Math.round(marketValue * 0.95);
   const estimatedProfit = resaleValue - listing.price - avgRepairCost;
 
-  let profitMin = resaleValue - listing.price - risk.estimatedRepairMax;
+  let profitMin = resaleValue - listing.price - risk.estimatedRepairMax - Math.round(modelRiskCost * 1.5);
   let profitMax = resaleValue - listing.price - risk.estimatedRepairMin;
-  if (risk.flags.length === 0) {
+  if (risk.flags.length === 0 && modelIssues.filter(i => i.severity === 'high').length === 0) {
     profitMin = resaleValue - listing.price - 3000;
     profitMax = resaleValue - listing.price;
   }
+
+  const reliability = getBrandReliability(brand);
 
   let ranking;
   if (risk.score >= 40 || estimatedProfit < -10000) {
@@ -181,10 +192,13 @@ function analyzeListing(listing) {
 
   if (priceDiffPercent > 25 && risk.score < 20) ranking = 'good';
   if (risk.score >= 50) ranking = 'avoid';
+  // Downgrade if brand is unreliable and has known high-severity issues
+  if (reliability.tier === 'D' && ranking === 'good') ranking = 'risky';
+  if (modelIssues.filter(i => i.severity === 'high').length >= 2 && ranking === 'good') ranking = 'risky';
 
-  return {
+  const result = {
     ...listing,
-    brand: extractBrand(listing.title) || 'ukjent',
+    brand,
     marketValue,
     priceDiff,
     priceDiffPercent,
@@ -194,7 +208,14 @@ function analyzeListing(listing) {
     estimatedProfit,
     profitRange: { min: profitMin, max: profitMax },
     ranking,
+    reliability: { score: reliability.score, tier: reliability.tier },
   };
+
+  const reco = generateRecommendation(result);
+  result.recommendation = reco.recommendation;
+  result.modelIssues = reco.modelIssues.map(i => ({ issue: i.issue, severity: i.severity }));
+
+  return result;
 }
 
 function analyzeListings(listings) {
