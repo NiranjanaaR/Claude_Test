@@ -124,10 +124,10 @@
         el.innerHTML = '<div class="no-results" style="grid-column:1/-1"><h3>Ingen resultater</h3><p>Prøv å justere filtrene.</p></div>';
         return;
       }
-      el.innerHTML = listings.map(buildCard).join('');
+      el.innerHTML = listings.map(function(l, i) { return buildCard(l, i); }).join('');
     }
 
-    function buildCard(l) {
+    function buildCard(l, idx) {
       var labels = {good:'Godt Kjøp',risky:'Risikabelt',avoid:'Unngå'};
       var specs = [];
       if (l.year) specs.push(l.year);
@@ -184,7 +184,109 @@
         +'<div class="price-item"><div class="price-label">Fortjeneste-spenn</div><div class="price-value" style="font-size:0.85rem">'+formatKr(l.profitRange.min)+' til '+formatKr(l.profitRange.max)+'</div></div>'
         +'</div>'
         +descHtml+repairHtml+'</div>'
-        +'<div class="card-footer">'+linkHtml+(l.location?'<span class="location">'+esc(l.location)+'</span>':'')+'</div></div>';
+        +'<div class="card-footer">'
+        +linkHtml
+        +'<div class="ai-dropdown" style="position:relative;display:inline-block">'
+        +'<button onclick="toggleAiMenu(this)" style="background:linear-gradient(135deg,#7c3aed,#a855f7);color:white;border:none;padding:6px 14px;border-radius:6px;font-size:0.8rem;font-weight:600;cursor:pointer">Spør AI</button>'
+        +'<div class="ai-menu" style="display:none;position:absolute;bottom:100%;right:0;margin-bottom:6px;background:white;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,0.15);border:1px solid #e2e8f0;overflow:hidden;min-width:180px;z-index:10">'
+        +'<button onclick="askAI(\'chatgpt\','+idx+')" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;cursor:pointer;font-size:0.85rem;border-bottom:1px solid #f1f5f9">ChatGPT</button>'
+        +'<button onclick="askAI(\'claude\','+idx+')" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;cursor:pointer;font-size:0.85rem;border-bottom:1px solid #f1f5f9">Claude</button>'
+        +'<button onclick="askAI(\'gemini\','+idx+')" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;cursor:pointer;font-size:0.85rem;border-bottom:1px solid #f1f5f9">Gemini</button>'
+        +'<button onclick="askAI(\'copy\','+idx+')" style="display:block;width:100%;text-align:left;padding:10px 14px;border:none;background:none;cursor:pointer;font-size:0.85rem;color:var(--text-light)">Kopier prompt</button>'
+        +'</div></div>'
+        +(l.location?'<span class="location">'+esc(l.location)+'</span>':'')
+        +'</div></div>';
+    }
+
+    function toggleAiMenu(btn) {
+      var menu = btn.nextElementSibling;
+      var allMenus = document.querySelectorAll('.ai-menu');
+      allMenus.forEach(function(m) { if (m !== menu) m.style.display = 'none'; });
+      menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    }
+
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.ai-dropdown')) {
+        document.querySelectorAll('.ai-menu').forEach(function(m) { m.style.display = 'none'; });
+      }
+    });
+
+    function buildAiPrompt(listing) {
+      var parts = [
+        'Jeg vurderer å kjøpe denne bruktbilen fra FINN.no. Analyser den grundig og gi meg råd.\n',
+        'BIL: ' + listing.title,
+        'PRIS: ' + formatKr(listing.price),
+        'ÅRSMODELL: ' + (listing.year || 'Ukjent'),
+        'KILOMETERSTAND: ' + (listing.mileage ? formatNum(listing.mileage) + ' km' : 'Ukjent'),
+        'DRIVSTOFF: ' + (listing.fuel || 'Ukjent'),
+        'GIRKASSE: ' + (listing.transmission || 'Ukjent'),
+      ];
+      if (listing.description) {
+        parts.push('\nBESKRIVELSE FRA ANNONSEN:\n"' + listing.description + '"');
+      }
+      if (listing.link) {
+        parts.push('\nFINN.no LENKE: ' + listing.link);
+      }
+      parts.push('\nVÅR ANALYSE:');
+      parts.push('- Estimert markedsverdi: ' + formatKr(listing.marketValue));
+      parts.push('- Deal Score: ' + (listing.dealScore || 'N/A') + '/10');
+      parts.push('- Estimert fortjeneste ved videresalg: ' + formatKr(listing.estimatedProfit));
+      if (listing.descriptionAnalysis) {
+        if (listing.descriptionAnalysis.positiveFlags && listing.descriptionAnalysis.positiveFlags.length > 0)
+          parts.push('- Positive signaler: ' + listing.descriptionAnalysis.positiveFlags.join(', '));
+        if (listing.descriptionAnalysis.negativeFlags && listing.descriptionAnalysis.negativeFlags.length > 0)
+          parts.push('- Negative signaler: ' + listing.descriptionAnalysis.negativeFlags.join(', '));
+      }
+      parts.push('\nVennligst gi meg:');
+      parts.push('1. Er dette en god deal? Hvorfor/hvorfor ikke?');
+      parts.push('2. Kjente problemer med denne modellen/motoren/årgangen');
+      parts.push('3. Hva bør jeg sjekke spesielt ved visning?');
+      parts.push('4. Realistisk videresalgspris etter eventuell oppussing');
+      parts.push('5. Din anbefaling: kjøp, forhandle ned, eller unngå?');
+      return parts.join('\n');
+    }
+
+    function askAI(service, idx) {
+      var listing = LISTINGS[idx];
+      if (!listing) return;
+      var prompt = buildAiPrompt(listing);
+
+      var urls = {
+        chatgpt: 'https://chatgpt.com/',
+        claude: 'https://claude.ai/new',
+        gemini: 'https://gemini.google.com/app',
+      };
+
+      navigator.clipboard.writeText(prompt).then(function() {
+        if (service === 'copy') {
+          showToast('Prompt kopiert! Lim inn i din foretrukne AI-chat.');
+        } else {
+          window.open(urls[service], '_blank');
+          showToast('Prompt kopiert! Lim inn (Ctrl+V) i chatten som åpnes.');
+        }
+      }).catch(function() {
+        var ta = document.createElement('textarea');
+        ta.value = prompt;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        if (service !== 'copy') window.open(urls[service], '_blank');
+        showToast('Prompt kopiert! Lim inn (Ctrl+V) i chatten.');
+      });
+
+      document.querySelectorAll('.ai-menu').forEach(function(m) { m.style.display = 'none'; });
+    }
+
+    function showToast(msg) {
+      var existing = document.getElementById('bildeal-toast');
+      if (existing) existing.remove();
+      var toast = document.createElement('div');
+      toast.id = 'bildeal-toast';
+      toast.textContent = msg;
+      toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:white;padding:12px 24px;border-radius:8px;font-size:0.9rem;font-weight:500;z-index:9999;box-shadow:0 8px 30px rgba(0,0,0,0.2)';
+      document.body.appendChild(toast);
+      setTimeout(function() { toast.remove(); }, 3500);
     }
 
     function formatKr(n) { return (n||0).toLocaleString('nb-NO')+' kr'; }
