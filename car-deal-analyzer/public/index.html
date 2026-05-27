@@ -16,107 +16,52 @@
 
   <main>
     <div class="tabs">
-      <button class="tab active" data-tab="search">Søk FINN.no</button>
+      <button class="tab active" data-tab="setup">Oppsett</button>
       <button class="tab" data-tab="manual">Manuell analyse</button>
     </div>
 
-    <section id="search-panel" class="panel active">
-      <form id="search-form" class="filter-grid">
-        <div class="filter-group">
-          <label for="brand">Merke</label>
-          <select id="brand" name="brand">
-            <option value="">Alle merker</option>
-            <option value="audi">Audi</option>
-            <option value="bmw">BMW</option>
-            <option value="citroen">Citroën</option>
-            <option value="ford">Ford</option>
-            <option value="honda">Honda</option>
-            <option value="hyundai">Hyundai</option>
-            <option value="kia">Kia</option>
-            <option value="mazda">Mazda</option>
-            <option value="mercedes-benz">Mercedes-Benz</option>
-            <option value="mitsubishi">Mitsubishi</option>
-            <option value="nissan">Nissan</option>
-            <option value="opel">Opel</option>
-            <option value="peugeot">Peugeot</option>
-            <option value="renault">Renault</option>
-            <option value="seat">Seat</option>
-            <option value="skoda">Skoda</option>
-            <option value="subaru">Subaru</option>
-            <option value="suzuki">Suzuki</option>
-            <option value="tesla">Tesla</option>
-            <option value="toyota">Toyota</option>
-            <option value="volkswagen">Volkswagen</option>
-            <option value="volvo">Volvo</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="price_from">Pris fra (kr)</label>
-          <input type="number" id="price_from" name="price_from" placeholder="f.eks. 50000">
-        </div>
-        <div class="filter-group">
-          <label for="price_to">Pris til (kr)</label>
-          <input type="number" id="price_to" name="price_to" placeholder="f.eks. 200000">
-        </div>
-        <div class="filter-group">
-          <label for="year_from">Årsmodell fra</label>
-          <input type="number" id="year_from" name="year_from" placeholder="f.eks. 2015">
-        </div>
-        <div class="filter-group">
-          <label for="year_to">Årsmodell til</label>
-          <input type="number" id="year_to" name="year_to" placeholder="f.eks. 2023">
-        </div>
-        <div class="filter-group">
-          <label for="mileage_to">Maks kilometerstand</label>
-          <input type="number" id="mileage_to" name="mileage_to" placeholder="f.eks. 150000">
-        </div>
-        <div class="filter-group">
-          <label for="fuel">Drivstoff</label>
-          <select id="fuel" name="fuel">
-            <option value="">Alle</option>
-            <option value="bensin">Bensin</option>
-            <option value="diesel">Diesel</option>
-            <option value="elektrisk">Elektrisk</option>
-            <option value="hybrid">Hybrid</option>
-            <option value="pluginhybrid">Plugin Hybrid</option>
-          </select>
-        </div>
-        <div class="filter-group">
-          <label for="transmission">Girkasse</label>
-          <select id="transmission" name="transmission">
-            <option value="">Alle</option>
-            <option value="automat">Automat</option>
-            <option value="manuell">Manuell</option>
-          </select>
-        </div>
-        <div class="filter-actions">
-          <button type="submit" class="btn btn-primary">Søk og analyser</button>
-          <button type="reset" class="btn btn-secondary">Nullstill</button>
-        </div>
-      </form>
+    <section id="setup-panel" class="panel active">
+      <div class="setup-container" style="background:var(--card-bg);padding:2rem;border-radius:var(--radius);border:1px solid var(--border)">
+        <h2 style="margin-bottom:0.5rem">Slik bruker du BilDeal</h2>
+        <p style="color:var(--text-light);margin-bottom:1.5rem">Én gang oppsett, deretter bare ett klikk for å analysere alle biler på FINN.no</p>
 
-      <div id="result-filters" class="result-filters hidden">
-        <h3>Filtrer resultater</h3>
-        <div class="result-filter-grid">
-          <div class="filter-group">
-            <label for="filter-ranking">Vurdering</label>
-            <select id="filter-ranking">
-              <option value="">Alle</option>
-              <option value="good">Godt Kjøp</option>
-              <option value="risky">Risikabelt</option>
-              <option value="avoid">Unngå</option>
-            </select>
+        <div style="display:flex;flex-direction:column;gap:1.5rem">
+          <div class="setup-step">
+            <h3 style="color:var(--primary)">Steg 1: Vis bokmerkebaren</h3>
+            <p>Trykk <kbd style="background:#e2e8f0;padding:2px 8px;border-radius:4px;font-family:monospace">Ctrl + Shift + B</kbd> i Chrome for å vise bokmerkebaren.</p>
           </div>
-          <div class="filter-group">
-            <label for="filter-min-profit">Min. fortjeneste (kr)</label>
-            <input type="number" id="filter-min-profit" placeholder="f.eks. 10000">
+
+          <div class="setup-step">
+            <h3 style="color:var(--primary)">Steg 2: Dra knappen til bokmerkebaren</h3>
+            <p style="margin-bottom:0.75rem">Dra denne knappen opp til bokmerkebaren din:</p>
+            <p style="text-align:center;padding:1.5rem;background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:8px;border:2px dashed #3b82f6">
+              <a id="bookmarklet-link" href="#" onclick="return false"
+                 style="display:inline-block;background:linear-gradient(135deg,#1e3a8a,#3b82f6);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:1.1rem;cursor:grab;box-shadow:0 4px 15px rgba(30,64,175,0.3)">
+                Analyser FINN.no
+              </a>
+            </p>
+            <p style="text-align:center;color:var(--text-light);margin-top:0.5rem;font-size:0.85rem">
+              Klikk og dra knappen opp til bokmerkebaren &uarr;
+            </p>
           </div>
-          <div class="filter-group">
-            <label for="filter-max-risk">Maks risikoscore</label>
-            <input type="number" id="filter-max-risk" placeholder="0-100" min="0" max="100">
+
+          <div class="setup-step">
+            <h3 style="color:var(--primary)">Steg 3: Bruk den!</h3>
+            <ol style="padding-left:1.25rem;line-height:2">
+              <li>Gå til <a href="https://www.finn.no/car/used/search.html" target="_blank" rel="noopener" style="color:var(--primary);font-weight:600">FINN.no bilsøk</a> og søk etter biler</li>
+              <li>Klikk <strong>"Analyser FINN.no"</strong> i bokmerkebaren</li>
+              <li>En ny fane åpnes med alle biler analysert — rangert som Godt Kjøp, Risikabelt eller Unngå!</li>
+            </ol>
           </div>
+        </div>
+
+        <div style="margin-top:2rem;padding:1rem;background:var(--good-bg);border-radius:8px;border:1px solid #bbf7d0">
+          <strong style="color:var(--good)">Viktig:</strong> Serveren (denne appen) må kjøre i bakgrunnen mens du bruker bookmarkleten.
         </div>
       </div>
+    </section>
+
+    <section id="search-panel" class="panel" style="display:none">
     </section>
 
     <section id="manual-panel" class="panel">

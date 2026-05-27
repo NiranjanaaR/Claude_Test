@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BilDeal — Analyseresultater</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <h1>BilDeal — Resultater</h1>
+      <p class="subtitle" id="subtitle">Analyserer annonser fra FINN.no...</p>
+    </div>
+  </header>
+  <main>
+    <div id="result-filters" class="result-filters">
+      <h3>Filtrer resultater</h3>
+      <div class="result-filter-grid">
+        <div class="filter-group">
+          <label for="filter-ranking">Vurdering</label>
+          <select id="filter-ranking">
+            <option value="">Alle</option>
+            <option value="good">Godt Kjøp</option>
+            <option value="risky">Risikabelt</option>
+            <option value="avoid">Unngå</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filter-min-profit">Min. fortjeneste (kr)</label>
+          <input type="number" id="filter-min-profit" placeholder="f.eks. 10000">
+        </div>
+        <div class="filter-group">
+          <label for="filter-max-risk">Maks risikoscore</label>
+          <input type="number" id="filter-max-risk" placeholder="0-100" min="0" max="100">
+        </div>
+        <div class="filter-group">
+          <label for="filter-sort">Sorter etter</label>
+          <select id="filter-sort">
+            <option value="ranking">Vurdering</option>
+            <option value="profit-desc">Høyest fortjeneste</option>
+            <option value="price-asc">Lavest pris</option>
+            <option value="risk-asc">Lavest risiko</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <section id="summary" class="summary">
+      <div class="summary-card good">
+        <span class="summary-count" id="count-good">0</span>
+        <span class="summary-label">Godt Kjøp</span>
+      </div>
+      <div class="summary-card risky">
+        <span class="summary-count" id="count-risky">0</span>
+        <span class="summary-label">Risikabelt</span>
+      </div>
+      <div class="summary-card avoid">
+        <span class="summary-count" id="count-avoid">0</span>
+        <span class="summary-label">Unngå</span>
+      </div>
+      <div class="summary-card total">
+        <span class="summary-count" id="count-total">0</span>
+        <span class="summary-label">Totalt</span>
+      </div>
+    </section>
+
+    <section id="results" class="results"></section>
+
+    <div style="text-align:center;margin-top:2rem">
+      <a href="/" class="btn btn-secondary">Tilbake til hovedsiden</a>
+    </div>
+  </main>
+  <footer>
+    <p>BilDeal — Estimater er veiledende og basert på markedsdata.</p>
+  </footer>
+  <script>
+    var LISTINGS = window.__BILDEAL_DATA__ || [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var allListings = LISTINGS;
+      document.getElementById('subtitle').textContent =
+        allListings.length + ' annonser analysert fra FINN.no';
+
+      updateSummary(allListings);
+      renderCards(allListings);
+
+      ['filter-ranking','filter-min-profit','filter-max-risk','filter-sort'].forEach(function(id) {
+        document.getElementById(id).addEventListener('input', applyFilters);
+      });
+
+      function applyFilters() {
+        var ranking = document.getElementById('filter-ranking').value;
+        var minProfit = parseInt(document.getElementById('filter-min-profit').value) || -Infinity;
+        var maxRisk = parseInt(document.getElementById('filter-max-risk').value);
+        var sort = document.getElementById('filter-sort').value;
+
+        var filtered = allListings.filter(function(l) {
+          if (ranking && l.ranking !== ranking) return false;
+          if (l.estimatedProfit < minProfit) return false;
+          if (!isNaN(maxRisk) && l.risk.score > maxRisk) return false;
+          return true;
+        });
+
+        if (sort === 'profit-desc') filtered.sort(function(a,b) { return b.estimatedProfit - a.estimatedProfit; });
+        else if (sort === 'price-asc') filtered.sort(function(a,b) { return a.price - b.price; });
+        else if (sort === 'risk-asc') filtered.sort(function(a,b) { return a.risk.score - b.risk.score; });
+
+        updateSummary(filtered);
+        renderCards(filtered);
+      }
+    });
+
+    function updateSummary(listings) {
+      document.getElementById('count-good').textContent = listings.filter(function(l){return l.ranking==='good'}).length;
+      document.getElementById('count-risky').textContent = listings.filter(function(l){return l.ranking==='risky'}).length;
+      document.getElementById('count-avoid').textContent = listings.filter(function(l){return l.ranking==='avoid'}).length;
+      document.getElementById('count-total').textContent = listings.length;
+    }
+
+    function renderCards(listings) {
+      var el = document.getElementById('results');
+      if (listings.length === 0) {
+        el.innerHTML = '<div class="no-results" style="grid-column:1/-1"><h3>Ingen resultater</h3><p>Prøv å justere filtrene.</p></div>';
+        return;
+      }
+      el.innerHTML = listings.map(buildCard).join('');
+    }
+
+    function buildCard(l) {
+      var labels = {good:'Godt Kjøp',risky:'Risikabelt',avoid:'Unngå'};
+      var specs = [];
+      if (l.year) specs.push(l.year);
+      if (l.mileage) specs.push(formatNum(l.mileage)+' km');
+      if (l.fuel) specs.push(l.fuel);
+      if (l.transmission) specs.push(l.transmission);
+
+      var riskLevel = l.risk.score < 20 ? 'low' : l.risk.score < 40 ? 'medium' : 'high';
+      var profitClass = l.estimatedProfit >= 0 ? 'profit' : 'loss';
+      var riskHtml = l.risk.flags.length > 0
+        ? '<div class="risk-flags">' + l.risk.flags.map(function(f){return '<span class="risk-flag">'+esc(f)+'</span>'}).join('') + '</div>'
+        : '<div style="font-size:0.8rem;color:var(--good)">Ingen risikofaktorer funnet</div>';
+      var repairHtml = l.risk.estimatedRepairMin > 0
+        ? '<div class="repair-estimate">Estimert reparasjon: <strong>'+formatKr(l.risk.estimatedRepairMin)+' – '+formatKr(l.risk.estimatedRepairMax)+'</strong></div>'
+        : '';
+      var linkHtml = l.link
+        ? '<a href="'+esc(l.link)+'" target="_blank" rel="noopener">Se på FINN.no &rarr;</a>'
+        : '';
+
+      return '<div class="car-card ranking-'+l.ranking+'">'
+        +'<div class="card-header"><div class="card-title">'+esc(l.title)+'</div><span class="badge badge-'+l.ranking+'">'+labels[l.ranking]+'</span></div>'
+        +'<div class="card-body">'
+        +'<div class="card-specs">'+specs.map(function(s){return '<span class="spec-tag">'+esc(s+'')+'</span>'}).join('')+'</div>'
+        +'<div class="price-grid">'
+        +'<div class="price-item asking"><div class="price-label">Prisantydning</div><div class="price-value">'+formatKr(l.price)+'</div></div>'
+        +'<div class="price-item market"><div class="price-label">Markedsverdi</div><div class="price-value">'+formatKr(l.marketValue)+'</div></div>'
+        +'<div class="price-item '+profitClass+'"><div class="price-label">Est. fortjeneste</div><div class="price-value">'+(l.estimatedProfit>=0?'+':'')+formatKr(l.estimatedProfit)+'</div></div>'
+        +'<div class="price-item"><div class="price-label">Fortjeneste-spenn</div><div class="price-value" style="font-size:0.85rem">'+formatKr(l.profitRange.min)+' til '+formatKr(l.profitRange.max)+'</div></div>'
+        +'</div>'
+        +'<div class="risk-section"><div class="price-label" style="margin-bottom:0.3rem">Risikoscore: '+l.risk.score+'/100</div>'
+        +'<div class="risk-bar-container"><div class="risk-bar '+riskLevel+'" style="width:'+Math.max(2,l.risk.score)+'%"></div></div>'
+        +riskHtml+'</div>'+repairHtml+'</div>'
+        +'<div class="card-footer">'+linkHtml+(l.location?'<span class="location">'+esc(l.location)+'</span>':'')+'</div></div>';
+    }
+
+    function formatKr(n) { return (n||0).toLocaleString('nb-NO')+' kr'; }
+    function formatNum(n) { return (n||0).toLocaleString('nb-NO'); }
+    function esc(s) { var d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+  </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const { scrapeFinn, scrapeListingDetail } = require('./scraper');
+const fs = require('fs');
 const { analyzeListings, analyzeManualInput } = require('./analyzer');
 
 const app = express();
@@ -8,17 +8,19 @@ const PORT = 3000;
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
 app.get('/api/search', async (req, res) => {
   const params = req.query;
   console.log('Search request:', params);
   try {
+    const { scrapeFinn } = require('./scraper');
     const listings = await scrapeFinn(params);
     console.log(`Scrape returned ${listings.length} listings`);
     if (!listings || listings.length === 0) {
       return res.json({
         source: 'none',
-        note: 'Ingen resultater fra FINN.no. FINN.no kan blokkere forespørselen. Sjekk terminalen for detaljer. Bruk "Manuell analyse"-fanen i mellomtiden.',
+        note: 'Ingen resultater fra FINN.no. Bruk bookmarklet-metoden: gå til Oppsett-fanen for instruksjoner.',
         listings: [],
       });
     }
@@ -26,25 +28,32 @@ app.get('/api/search', async (req, res) => {
     res.json({ source: 'finn', count: analyzed.length, listings: analyzed });
   } catch (err) {
     console.error('Scrape error:', err.message);
-    console.error(err.stack);
     res.json({
       source: 'error',
-      note: `Feil ved henting fra FINN.no: ${err.message}. Bruk "Manuell analyse"-fanen.`,
+      note: 'Kunne ikke scrape FINN.no. Bruk bookmarklet i stedet — se Oppsett-fanen.',
       listings: [],
     });
   }
 });
 
-app.get('/api/detail', async (req, res) => {
-  const { url } = req.query;
-  if (!url || !url.includes('finn.no')) {
-    return res.status(400).json({ error: 'Ugyldig FINN.no URL' });
-  }
+app.post('/results', (req, res) => {
   try {
-    const detail = await scrapeListingDetail(url);
-    res.json(detail);
+    const raw = req.body.listings;
+    if (!raw) return res.status(400).send('Ingen data mottatt');
+
+    const listings = JSON.parse(raw);
+    console.log(`Bookmarklet sent ${listings.length} listings for analysis`);
+    const analyzed = analyzeListings(listings);
+
+    const template = fs.readFileSync(path.join(__dirname, 'public', 'results.html'), 'utf-8');
+    const html = template.replace(
+      'window.__BILDEAL_DATA__ || []',
+      JSON.stringify(analyzed)
+    );
+    res.send(html);
   } catch (err) {
-    res.json({ description: '', euDate: '' });
+    console.error('Results error:', err.message);
+    res.status(500).send('Analysefeil: ' + err.message);
   }
 });
 
@@ -59,10 +68,10 @@ app.post('/api/analyze', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Car Deal Analyzer running at http://localhost:${PORT}`);
-  console.log('');
-  console.log('Tips:');
-  console.log('  - If FINN.no blocks scraping, try visible browser mode:');
-  console.log('    HEADLESS=false node server.js');
-  console.log('  - The "Manuell analyse" tab always works regardless');
+  console.log(`\nBilDeal Car Analyzer running at http://localhost:${PORT}\n`);
+  console.log('How to use:');
+  console.log('  1. Open http://localhost:3000 in your browser');
+  console.log('  2. Go to the "Oppsett" tab and drag the bookmarklet to your bookmarks bar');
+  console.log('  3. Search for cars on FINN.no');
+  console.log('  4. Click the bookmarklet — results open in a new tab!\n');
 });

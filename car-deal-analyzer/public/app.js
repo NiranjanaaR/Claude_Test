@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
   const tabs = document.querySelectorAll('.tab');
-  const searchForm = document.getElementById('search-form');
   const manualForm = document.getElementById('manual-form');
   const resultsEl = document.getElementById('results');
   const summaryEl = document.getElementById('summary');
@@ -12,6 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let allListings = [];
 
+  // Set up bookmarklet link
+  const bmLink = document.getElementById('bookmarklet-link');
+  if (bmLink) {
+    bmLink.href = "javascript:void((function(){var s=document.createElement('script');s.src='http://localhost:3000/bookmarklet.js?t='+Date.now();document.body.appendChild(s)})())";
+  }
+
+  // Tab switching
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       tabs.forEach(t => t.classList.remove('active'));
@@ -21,40 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  searchForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const formData = new FormData(searchForm);
-    const params = new URLSearchParams();
-    for (const [key, value] of formData) {
-      if (value) params.set(key, value);
-    }
-
-    showStatus('loading', '<span class="spinner"></span> Åpner FINN.no i bakgrunnen og henter annonser... (kan ta 15-30 sek første gang)');
-    resultsEl.innerHTML = '';
-    summaryEl.classList.add('hidden');
-    resultFilters.classList.add('hidden');
-
-    try {
-      const response = await fetch(`/api/search?${params.toString()}`);
-      const data = await response.json();
-
-      if (data.note) {
-        showStatus('info', data.note);
-      } else if (data.listings.length > 0) {
-        showStatus('success', `Fant ${data.listings.length} annonser fra FINN.no — analysert og rangert!`);
-      }
-
-      if (data.listings.length === 0 && !data.note) {
-        showStatus('info', 'Ingen resultater funnet. Prøv bredere søkefiltre.');
-      }
-
-      allListings = data.listings;
-      renderResults(allListings);
-    } catch (err) {
-      showStatus('error', 'Noe gikk galt. Sjekk at serveren kjører og prøv igjen.');
-    }
-  });
-
+  // Manual form
   manualForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(manualForm);
@@ -91,14 +64,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // Result filters
   [filterRanking, filterMinProfit, filterMaxRisk].forEach(el => {
-    el.addEventListener('input', () => applyResultFilters());
+    if (el) el.addEventListener('input', () => applyResultFilters());
   });
 
   function applyResultFilters() {
-    const ranking = filterRanking.value;
-    const minProfit = parseInt(filterMinProfit.value) || -Infinity;
-    const maxRisk = parseInt(filterMaxRisk.value);
+    const ranking = filterRanking ? filterRanking.value : '';
+    const minProfit = filterMinProfit ? parseInt(filterMinProfit.value) || -Infinity : -Infinity;
+    const maxRisk = filterMaxRisk ? parseInt(filterMaxRisk.value) : NaN;
 
     const filtered = allListings.filter(l => {
       if (ranking && l.ranking !== ranking) return false;
@@ -112,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderResults(listings) {
-    if (listings.length > 1) {
+    if (listings.length > 1 && resultFilters) {
       resultFilters.classList.remove('hidden');
     }
     updateSummary(listings);
