@@ -11,12 +11,14 @@ app.use(express.json());
 
 app.get('/api/search', async (req, res) => {
   const params = req.query;
+  console.log('Search request:', params);
   try {
     const listings = await scrapeFinn(params);
+    console.log(`Scrape returned ${listings.length} listings`);
     if (!listings || listings.length === 0) {
       return res.json({
         source: 'none',
-        note: 'Ingen resultater fra FINN.no. Prøv andre filtre, eller legg inn en bil manuelt.',
+        note: 'Ingen resultater fra FINN.no. FINN.no kan blokkere forespørselen. Sjekk terminalen for detaljer. Bruk "Manuell analyse"-fanen i mellomtiden.',
         listings: [],
       });
     }
@@ -24,9 +26,10 @@ app.get('/api/search', async (req, res) => {
     res.json({ source: 'finn', count: analyzed.length, listings: analyzed });
   } catch (err) {
     console.error('Scrape error:', err.message);
+    console.error(err.stack);
     res.json({
       source: 'error',
-      note: 'Kunne ikke nå FINN.no akkurat nå. Prøv igjen senere, eller legg inn en bil manuelt.',
+      note: `Feil ved henting fra FINN.no: ${err.message}. Bruk "Manuell analyse"-fanen.`,
       listings: [],
     });
   }
@@ -57,4 +60,9 @@ app.post('/api/analyze', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Car Deal Analyzer running at http://localhost:${PORT}`);
+  console.log('');
+  console.log('Tips:');
+  console.log('  - If FINN.no blocks scraping, try visible browser mode:');
+  console.log('    HEADLESS=false node server.js');
+  console.log('  - The "Manuell analyse" tab always works regardless');
 });

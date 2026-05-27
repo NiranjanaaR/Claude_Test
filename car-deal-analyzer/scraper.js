@@ -1,5 +1,10 @@
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const cheerio = require('cheerio');
+
+puppeteer.use(StealthPlugin());
+
+const USE_HEADLESS = process.env.HEADLESS !== 'false';
 
 const FINN_BRAND_CODES = {
   'audi': '0.712', 'bmw': '0.714', 'citroen': '0.716', 'ford': '0.720',
@@ -22,14 +27,16 @@ let browserInstance = null;
 
 async function getBrowser() {
   if (browserInstance && browserInstance.connected) return browserInstance;
+  console.log(`Launching browser (headless: ${USE_HEADLESS})...`);
   browserInstance = await puppeteer.launch({
-    headless: 'new',
+    headless: USE_HEADLESS ? 'new' : false,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-blink-features=AutomationControlled',
       '--disable-infobars',
       '--window-size=1920,1080',
+      '--lang=nb-NO',
     ],
   });
   return browserInstance;
@@ -72,29 +79,41 @@ async function scrapeFinn(params) {
     browser = await getBrowser();
     page = await browser.newPage();
 
-    await page.setUserAgent(
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36'
-    );
-    await page.setExtraHTTPHeaders({ 'Accept-Language': 'nb-NO,nb;q=0.9,no;q=0.8' });
     await page.setViewport({ width: 1920, height: 1080 });
 
-    await page.evaluateOnNewDocument(() => {
-      Object.defineProperty(navigator, 'webdriver', { get: () => false });
-    });
-
-    await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+    console.log('Navigating to FINN.no...');
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
     // Accept cookies if a consent dialog appears
     try {
       const consentBtn = await page.waitForSelector(
-        'button[title*="Godta"], button[title*="godta"], button[title*="Accept"], button:has-text("Godta alle"), [class*="consent"] button, #onetrust-accept-btn-handler',
-        { timeout: 3000 }
+        'button[title*="Godta"], button[title*="godta"], button[title*="Accept"], [class*="consent"] button, #onetrust-accept-btn-handler, button[data-testid*="accept"], button[id*="accept"]',
+        { timeout: 5000 }
       );
-      if (consentBtn) await consentBtn.click();
-      await new Promise(r => setTimeout(r, 1000));
+      if (consentBtn) {
+        console.log('Accepting cookies...');
+        await consentBtn.click();
+      }
     } catch (_) { /* no consent dialog */ }
 
+    // Wait for page to fully render
+    await new Promise(r => setTimeout(r, 3000));
+
+    // Scroll down to trigger lazy-loading of ads
+    await page.evaluate(async () => {
+      for (let i = 0; i < 3; i++) {
+        window.scrollBy(0, window.innerHeight);
+        await new Promise(r => setTimeout(r, 800));
+      }
+      window.scrollTo(0, 0);
+    });
     await new Promise(r => setTimeout(r, 2000));
+
+    // Log page title and URL for debugging
+    const pageTitle = await page.title();
+    const currentUrl = page.url();
+    console.log('Page title:', pageTitle);
+    console.log('Current URL:', currentUrl);
 
     // Try extracting data from the page's JavaScript context first
     const jsonListings = await page.evaluate(() => {
@@ -147,6 +166,20 @@ async function scrapeFinn(params) {
       await page.close();
       return parsed;
     }
+
+    // Debug: log what we see on the page
+    const debugInfo = await page.evaluate(() => {
+      const articles = document.querySelectorAll('article');
+      const links = document.querySelectorAll('a[href*="/car/"]');
+      const bodySnippet = document.body.innerText.substring(0, 500);
+      return {
+        articleCount: articles.length,
+        carLinkCount: links.length,
+        bodySnippet,
+        hasNextData: !!document.getElementById('__NEXT_DATA__'),
+      };
+    });
+    console.log('Debug info:', JSON.stringify(debugInfo, null, 2));
 
     // Fallback: scrape rendered HTML
     const html = await page.content();
