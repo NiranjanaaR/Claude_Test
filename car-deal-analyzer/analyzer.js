@@ -210,40 +210,38 @@ function analyzeDescription(description) {
 }
 
 function calculateDealScore(listing, marketValue, descAnalysis) {
-  let score = 4.5; // Start slightly below neutral — must earn a good score
+  let score = 5.0;
 
-  // Price factor: how much below REALISTIC resale value (85% of market)?
-  const resaleValue = marketValue * 0.85;
-  const margin = (resaleValue - listing.price) / listing.price;
-  if (margin > 0.40) score += 2.0;
-  else if (margin > 0.25) score += 1.5;
-  else if (margin > 0.15) score += 1.0;
-  else if (margin > 0.05) score += 0.5;
-  else if (margin > -0.05) score += 0;
-  else if (margin > -0.15) score -= 1.0;
-  else score -= 2.0;
+  // Price factor: how much below market value?
+  const priceDiffPct = (marketValue - listing.price) / Math.max(1, marketValue);
+  if (priceDiffPct > 0.40) score += 2.5;
+  else if (priceDiffPct > 0.25) score += 2.0;
+  else if (priceDiffPct > 0.15) score += 1.5;
+  else if (priceDiffPct > 0.05) score += 0.8;
+  else if (priceDiffPct > -0.05) score += 0;
+  else if (priceDiffPct > -0.15) score -= 0.8;
+  else score -= 1.5;
 
-  // Description factor (capped to avoid too much swing)
-  score += Math.max(-3, Math.min(2, descAnalysis.descriptionScore));
+  // Description factor
+  score += Math.max(-2.5, Math.min(2, descAnalysis.descriptionScore));
 
-  // No description penalty — unknown = risky
+  // No description = slight uncertainty
   if (!listing.description || listing.description.length < 20) {
-    score -= 0.5;
+    score -= 0.3;
   }
 
-  // Mileage factor — stricter
+  // Mileage factor
   if (listing.mileage > 0) {
-    if (listing.mileage > 300000) score -= 1.5;
-    else if (listing.mileage > 200000) score -= 1.0;
-    else if (listing.mileage > 150000) score -= 0.5;
+    if (listing.mileage > 300000) score -= 1.0;
+    else if (listing.mileage > 200000) score -= 0.5;
     else if (listing.mileage < 50000) score += 0.3;
   }
 
-  // Age factor
+  // Age factor — mild, since depreciation already accounts for age
   const currentYear = new Date().getFullYear();
   const age = listing.year ? currentYear - listing.year : 8;
-  if (age > 15) score -= 1.0;
-  else if (age > 10) score -= 0.5;
+  if (age > 18) score -= 0.8;
+  else if (age > 12) score -= 0.3;
 
   return Math.max(1, Math.min(10, Math.round(score * 10) / 10));
 }
@@ -259,22 +257,26 @@ function analyzeListing(listing) {
 
   const avgRepairCost = Math.round((descAnalysis.repairCostMin + descAnalysis.repairCostMax) / 2);
   // Resale: you never get full market value. Account for buyer negotiation, time, advertising, EU/service costs
-  const resaleValue = Math.round(marketValue * 0.85);
-  // Always budget a minimum buffer for unexpected costs (even "clean" cars need something)
-  const minBuffer = 5000;
+  const resaleValue = Math.round(marketValue * 0.88);
+  const minBuffer = 3000;
   const estimatedProfit = resaleValue - listing.price - avgRepairCost - minBuffer;
 
   let profitMin = resaleValue - listing.price - descAnalysis.repairCostMax - minBuffer * 2;
-  let profitMax = resaleValue - listing.price - descAnalysis.repairCostMin - minBuffer;
+  let profitMax = resaleValue - listing.price - descAnalysis.repairCostMin;
   if (descAnalysis.negativeFlags.length === 0) {
-    profitMin = resaleValue - listing.price - 8000;
-    profitMax = resaleValue - listing.price - minBuffer;
+    profitMin = resaleValue - listing.price - 5000;
+    profitMax = resaleValue - listing.price;
   }
 
   // Ranking based on deal score
+  // Profit reality check: can't be "good" if you'd lose money
+  let adjustedScore = dealScore;
+  if (estimatedProfit < -5000) adjustedScore = Math.min(adjustedScore, 4.0);
+  else if (estimatedProfit < 0) adjustedScore = Math.min(adjustedScore, 5.0);
+
   let ranking;
-  if (dealScore >= 6.5) ranking = 'good';
-  else if (dealScore >= 4.0) ranking = 'risky';
+  if (adjustedScore >= 5.5) ranking = 'good';
+  else if (adjustedScore >= 3.5) ranking = 'risky';
   else ranking = 'avoid';
 
   return {
