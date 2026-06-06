@@ -1217,7 +1217,7 @@
 <section class="join-section" id="join">
   <h2>Be Part of Our Story 🪷</h2>
   <p>Join hundreds of Indians across Agder — get event invites, community news and be part of something beautiful.</p>
-  <form class="join-form" name="join" method="POST" data-netlify="true" netlify-honeypot="bot-field" onsubmit="handleJoin(event)">
+  <form class="join-form" name="join" method="POST" action="/?joined=1" data-netlify="true" netlify-honeypot="bot-field" onsubmit="handleJoin(event)">
     <input type="hidden" name="form-name" value="join">
     <p style="display:none;"><label>Don't fill this out: <input name="bot-field"></label></p>
     <input type="text" name="name" placeholder="Your name" id="joinName" required>
