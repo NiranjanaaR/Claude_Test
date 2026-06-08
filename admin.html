@@ -687,6 +687,44 @@ const CLOUDINARY_UPLOAD_PRESET = "iia_uploads";</code>
             <div class="step"><span class="step-num">3</span>Also change <code>ADMIN_USERNAME</code> from <code>admin</code> to whatever you prefer.</div>
           </div>
 
+          <div class="config-block">
+            <h4>🎨 Image Generation Tips — Carousel & Gallery</h4>
+            <p style="font-size:13px;line-height:1.6;color:var(--text);margin-bottom:14px;">
+              Carousel images get cropped on different screen sizes (especially top &amp; bottom). To avoid losing important content, generate images with <strong>safe-zone padding</strong>.
+            </p>
+
+            <div style="background:#fff8ee;border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-size:13px;line-height:1.6;margin-bottom:14px;">
+              <strong>📐 Canvas: 1920 × 1080 px (landscape, 16:9)</strong><br>
+              ┌────────────────────────────┐<br>
+              │ 🌥️ Top padding · 135 px (may be cropped)<br>
+              ├────────────────────────────┤<br>
+              │ ⭐ Safe zone · 810 px (all titles, faces, logos go HERE) <br>
+              ├────────────────────────────┤<br>
+              │ 🌳 Bottom padding · 135 px (may be cropped) <br>
+              └────────────────────────────┘
+            </div>
+
+            <p style="font-size:13px;color:var(--text);margin-bottom:8px;"><strong>Ready-to-paste prompt for any AI image generator (Canva, ChatGPT, Gemini, etc.):</strong></p>
+            <code>Create a landscape banner image at exactly 1920 × 1080 pixels.
+
+Reserve the TOP 135 pixels as plain sky / background only — no text, no faces, no important objects.
+Reserve the BOTTOM 135 pixels as plain ground / background only — no text, no faces, no important objects.
+
+Place ALL important content (title text, dates, people, flags, logos, ribbons) within the middle 810 pixels of vertical space.
+
+Theme: [DESCRIBE EVENT HERE, e.g. "Diwali celebration with diyas and rangoli"]</code>
+
+            <p style="font-size:13px;color:var(--text);margin-top:14px;margin-bottom:8px;"><strong>✅ Before uploading — sanity check:</strong></p>
+            <div class="step"><span class="step-num">1</span>Open the image and mentally cover the top 12% with a finger.</div>
+            <div class="step"><span class="step-num">2</span>Cover the bottom 12% too.</div>
+            <div class="step"><span class="step-num">3</span>If the remaining middle still shows all the important text and faces — you're good. If anything important gets hidden, regenerate with more padding.</div>
+
+            <p style="font-size:13px;color:var(--text);margin-top:14px;margin-bottom:8px;"><strong>Gallery photos:</strong></p>
+            <div class="step"><span class="step-num">·</span>Any size works. Gallery uses album covers, not full-screen banners, so cropping is far less aggressive.</div>
+            <div class="step"><span class="step-num">·</span>Fill in the <strong>Label</strong> field with something nice (e.g. "Diwali 2024 · Lights") — otherwise the filename shows up on hover.</div>
+            <div class="step"><span class="step-num">·</span>Group related photos under the same <strong>Year</strong> + <strong>Event</strong> — they'll appear as one album card on the public site.</div>
+          </div>
+
           <div style="background:rgba(255,107,0,0.07);border:1px solid rgba(255,107,0,0.2);border-radius:12px;padding:16px 20px;font-size:13px;color:var(--text);line-height:1.7;margin-top:8px;">
             💡 <strong>Note on deletes:</strong> When you delete a slide or gallery item from this admin panel, the record is removed from Firestore and the item no longer shows on your site. The actual file stays in your Cloudinary account (because unsigned client deletes aren't allowed for security). You can periodically clean up unused files from the Cloudinary dashboard if you like.
           </div>
@@ -712,6 +750,9 @@ const CLOUDINARY_UPLOAD_PRESET = "iia_uploads";</code>
         <div class="icon">🖼️</div>
         <p>Drop image here or <span>browse</span></p>
         <p style="font-size:11px;margin-top:4px;">Recommended: 1920×1080px JPG or PNG</p>
+      </div>
+      <div style="background:rgba(255,107,0,0.07);border:1px solid rgba(255,107,0,0.25);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--text);line-height:1.6;margin-top:10px;">
+        ⚠️ <strong>Safe zone tip:</strong> Keep the top <strong>135 px</strong> and bottom <strong>135 px</strong> as plain sky / background only. The carousel may crop these edges on different screen sizes — all text, logos and faces must sit in the <strong>middle 810 px</strong>. See the <strong>Setup Guide → Image Generation Tips</strong> tab for a ready-to-paste prompt.
       </div>
       <img id="carouselPreview" style="display:none;width:100%;border-radius:10px;margin-top:10px;max-height:180px;object-fit:cover;">
     </div>
