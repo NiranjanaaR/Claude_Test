@@ -1641,54 +1641,66 @@ function selectYear(year, btn) {
 function renderAlbumGrid(year) {
   const container = document.getElementById('albumGrid');
   container.innerHTML = '';
-  // Container is now a block-level wrapper holding year sections
-  container.style.display = 'block';
+  container.style.display = 'grid';
 
-  const yearsToShow = year === 'all'
-    ? Object.keys(galleryData).sort((a, b) => String(b).localeCompare(String(a)))
-    : [year];
+  const years = Object.keys(galleryData)
+    .filter(y => galleryData[y] && Object.keys(galleryData[y]).length)
+    .sort((a, b) => String(b).localeCompare(String(a)));
 
-  // Filter out years with no events
-  const populated = yearsToShow.filter(y => galleryData[y] && Object.keys(galleryData[y]).length);
-  if (!populated.length) {
-    container.innerHTML = '<p style="color:rgba(255,255,255,0.5);text-align:center;padding:40px 0;">No albums yet.</p>';
+  if (!years.length) {
+    container.innerHTML = '<p style="color:rgba(255,255,255,0.5);text-align:center;grid-column:1/-1;padding:40px 0;">No albums yet.</p>';
     return;
   }
 
-  populated.forEach(y => {
-    const section = document.createElement('div');
-    section.className = 'album-year-section';
-
-    const heading = document.createElement('h3');
-    heading.className = 'album-year-heading';
-    heading.textContent = y;
-    section.appendChild(heading);
-
-    const grid = document.createElement('div');
-    grid.className = 'album-grid';
-
-    Object.keys(galleryData[y]).forEach(ev => {
-      const items = galleryData[y][ev];
-      const cover = items.find(i => i.type !== 'video') || items[0];
+  if (year === 'all') {
+    // Level 1: one card per YEAR
+    years.forEach(y => {
+      const events = Object.keys(galleryData[y]);
+      const allItems = events.flatMap(ev => galleryData[y][ev]);
+      const cover = allItems.find(i => i.type !== 'video') || allItems[0];
       const card = document.createElement('div');
       card.className = 'album-card';
-      const eventName = eventLabels[ev] || ev;
       const coverHtml = cover.type === 'video'
         ? `<video src="${cover.src}" muted preload="metadata"></video>`
-        : `<img src="${cover.src}" alt="${eventName}" loading="lazy">`;
+        : `<img src="${cover.src}" alt="${y}" loading="lazy">`;
       card.innerHTML = `
         ${coverHtml}
-        <span class="album-count">📷 ${items.length}</span>
+        <span class="album-count">📁 ${events.length} album${events.length === 1 ? '' : 's'}</span>
         <div class="album-overlay">
-          <div class="album-title">${eventName}</div>
+          <div class="album-title">${y}</div>
+          <div class="album-meta"><span>${allItems.length} photo${allItems.length === 1 ? '' : 's'} · ${events.length} event${events.length === 1 ? '' : 's'}</span></div>
         </div>`;
-      const _y = y, _ev = ev;
-      card.addEventListener('click', () => openAlbum(_y, _ev));
-      grid.appendChild(card);
+      const _y = y;
+      card.addEventListener('click', () => {
+        // Activate the matching year tab and drill into that year
+        const tabBtn = [...document.querySelectorAll('#galleryYearTabs .tab-btn')]
+          .find(b => b.textContent.trim() === _y);
+        selectYear(_y, tabBtn);
+      });
+      container.appendChild(card);
     });
+    return;
+  }
 
-    section.appendChild(grid);
-    container.appendChild(section);
+  // Level 2: one card per EVENT in the selected year
+  const yo = galleryData[year] || {};
+  Object.keys(yo).forEach(ev => {
+    const items = yo[ev];
+    const cover = items.find(i => i.type !== 'video') || items[0];
+    const card = document.createElement('div');
+    card.className = 'album-card';
+    const eventName = eventLabels[ev] || ev;
+    const coverHtml = cover.type === 'video'
+      ? `<video src="${cover.src}" muted preload="metadata"></video>`
+      : `<img src="${cover.src}" alt="${eventName}" loading="lazy">`;
+    card.innerHTML = `
+      ${coverHtml}
+      <span class="album-count">📷 ${items.length}</span>
+      <div class="album-overlay">
+        <div class="album-title">${eventName}</div>
+      </div>`;
+    card.addEventListener('click', () => openAlbum(year, ev));
+    container.appendChild(card);
   });
 }
 
@@ -1704,7 +1716,7 @@ function openAlbum(year, event) {
 }
 
 function closeAlbum() {
-  document.getElementById('albumGrid').style.display = 'block';
+  document.getElementById('albumGrid').style.display = 'grid';
   document.getElementById('galleryGrid').style.display = 'none';
   document.getElementById('albumDetailHeader').style.display = 'none';
 }
