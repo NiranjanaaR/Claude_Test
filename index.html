@@ -546,6 +546,17 @@
     }
   }
   /* Album cards (Option C – Photo Album view) */
+  .album-year-section {
+    max-width: 1200px; margin: 0 auto 40px;
+  }
+  .album-year-section:last-child { margin-bottom: 0; }
+  .album-year-heading {
+    font-family: 'Playfair Display', serif;
+    font-size: 30px; color: var(--saffron);
+    margin-bottom: 18px; padding-bottom: 8px;
+    border-bottom: 1px solid rgba(212,160,23,0.25);
+    letter-spacing: 1px;
+  }
   .album-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -1628,44 +1639,56 @@ function selectYear(year, btn) {
 }
 
 function renderAlbumGrid(year) {
-  const grid = document.getElementById('albumGrid');
-  grid.innerHTML = '';
-  grid.style.display = 'grid';
+  const container = document.getElementById('albumGrid');
+  container.innerHTML = '';
+  // Container is now a block-level wrapper holding year sections
+  container.style.display = 'block';
 
-  // Build a flat list of {year, event, items[]}
-  const albums = [];
   const yearsToShow = year === 'all'
     ? Object.keys(galleryData).sort((a, b) => String(b).localeCompare(String(a)))
     : [year];
-  yearsToShow.forEach(y => {
-    const yo = galleryData[y] || {};
-    Object.keys(yo).forEach(ev => {
-      albums.push({ year: y, event: ev, items: yo[ev] });
-    });
-  });
 
-  if (!albums.length) {
-    grid.innerHTML = '<p style="color:rgba(255,255,255,0.5);text-align:center;grid-column:1/-1;padding:40px 0;">No albums yet.</p>';
+  // Filter out years with no events
+  const populated = yearsToShow.filter(y => galleryData[y] && Object.keys(galleryData[y]).length);
+  if (!populated.length) {
+    container.innerHTML = '<p style="color:rgba(255,255,255,0.5);text-align:center;padding:40px 0;">No albums yet.</p>';
     return;
   }
 
-  albums.forEach(album => {
-    const cover = album.items.find(i => i.type !== 'video') || album.items[0];
-    const card = document.createElement('div');
-    card.className = 'album-card';
-    const eventName = eventLabels[album.event] || album.event;
-    const coverHtml = cover.type === 'video'
-      ? `<video src="${cover.src}" muted preload="metadata"></video>`
-      : `<img src="${cover.src}" alt="${eventName}" loading="lazy">`;
-    card.innerHTML = `
-      ${coverHtml}
-      <span class="album-count">📷 ${album.items.length}</span>
-      <div class="album-overlay">
-        <div class="album-title">${eventName}</div>
-        <div class="album-meta"><span>${album.year}</span></div>
-      </div>`;
-    card.addEventListener('click', () => openAlbum(album.year, album.event));
-    grid.appendChild(card);
+  populated.forEach(y => {
+    const section = document.createElement('div');
+    section.className = 'album-year-section';
+
+    const heading = document.createElement('h3');
+    heading.className = 'album-year-heading';
+    heading.textContent = y;
+    section.appendChild(heading);
+
+    const grid = document.createElement('div');
+    grid.className = 'album-grid';
+
+    Object.keys(galleryData[y]).forEach(ev => {
+      const items = galleryData[y][ev];
+      const cover = items.find(i => i.type !== 'video') || items[0];
+      const card = document.createElement('div');
+      card.className = 'album-card';
+      const eventName = eventLabels[ev] || ev;
+      const coverHtml = cover.type === 'video'
+        ? `<video src="${cover.src}" muted preload="metadata"></video>`
+        : `<img src="${cover.src}" alt="${eventName}" loading="lazy">`;
+      card.innerHTML = `
+        ${coverHtml}
+        <span class="album-count">📷 ${items.length}</span>
+        <div class="album-overlay">
+          <div class="album-title">${eventName}</div>
+        </div>`;
+      const _y = y, _ev = ev;
+      card.addEventListener('click', () => openAlbum(_y, _ev));
+      grid.appendChild(card);
+    });
+
+    section.appendChild(grid);
+    container.appendChild(section);
   });
 }
 
@@ -1681,7 +1704,7 @@ function openAlbum(year, event) {
 }
 
 function closeAlbum() {
-  document.getElementById('albumGrid').style.display = 'grid';
+  document.getElementById('albumGrid').style.display = 'block';
   document.getElementById('galleryGrid').style.display = 'none';
   document.getElementById('albumDetailHeader').style.display = 'none';
 }
