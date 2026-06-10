@@ -2,6 +2,10 @@
 // Sourced from pollen_menus_1.json (assembled 2026-06-10).
 // Norwegian descriptions kept verbatim from source; prices in NOK.
 // For Hong Kong we use the printed takeaway price where it differs from dine-in.
+//
+// Images: drop a JPG/PNG/WEBP into /images using the filename listed in each
+// restaurant's `image` field, and it will appear on the card and hero. If the
+// file is missing, the card falls back to the coloured banner with emoji.
 
 const RESTAURANTS = [
   {
@@ -13,6 +17,7 @@ const RESTAURANTS = [
     prepMins: 18,
     color: "#8b1a1a",
     emoji: "🥢",
+    image: "images/marco-polo.jpg",
     open: true,
     blurb: "Klassisk asiatisk i Pollen — chopsuey, szechuan og thairetter.",
     allergenLegend: "SY=soya · EG=egg · NØ=nøtter · G=gluten · FK=fisk · SD · BD · SEM=sesam · MK=melk",
@@ -85,6 +90,7 @@ const RESTAURANTS = [
     prepMins: 20,
     color: "#c2410c",
     emoji: "🥡",
+    image: "images/hong-kong.jpg",
     open: true,
     blurb: "Stor klassisk meny — egne take-away-priser.",
     allergenLegend: "Tallkoder 1–12 viser til allergenoversikt på restaurantens nettside.",
@@ -172,6 +178,7 @@ const RESTAURANTS = [
     prepMins: 12,
     color: "#1f7a3a",
     emoji: "🥙",
+    image: "images/happy-time.jpg",
     open: true,
     blurb: "Kebab, pizza og burgere — rask take-away rett ved Pollen.",
     menu: [
@@ -276,6 +283,7 @@ const RESTAURANTS = [
     prepMins: 8,
     color: "#5a3a22",
     emoji: "🥪",
+    image: "images/monsj.jpg",
     open: true,
     blurb: "Open sandwiches på godt brød. Kan bestilles glutenfritt.",
     menu: [
@@ -302,6 +310,7 @@ const RESTAURANTS = [
     prepMins: 15,
     color: "#2d3748",
     emoji: "🍴",
+    image: "images/streetfood.jpg",
     open: false,
     blurb: "Flere kjøkken under samme tak — meny varierer per sesong.",
     menu: []
@@ -315,6 +324,7 @@ const RESTAURANTS = [
     prepMins: 20,
     color: "#0f4c5c",
     emoji: "🦐",
+    image: "images/madam-reiersen.jpg",
     open: false,
     blurb: "Sesongmeny — egen take-away kommer.",
     menu: []
@@ -328,6 +338,7 @@ const RESTAURANTS = [
     prepMins: 10,
     color: "#7a3b00",
     emoji: "☕",
+    image: "images/cafe-victor.jpg",
     open: false,
     blurb: "Lunsjmeny under oppdatering.",
     menu: []

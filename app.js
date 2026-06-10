@@ -40,12 +40,19 @@ function renderRestaurantList() {
       : `<span class="chip chip-muted">Kommer snart</span>`;
     const href = r.open ? `restaurant.html?id=${r.id}` : "#";
     const cls = r.open ? "card" : "card card-closed";
+    const banner = r.image
+      ? `<div class="card-banner has-image" style="background-color:${r.color}">
+           <img src="${r.image}" alt="${r.name}" onerror="this.parentNode.classList.remove('has-image'); this.remove();" />
+           <span class="card-emoji card-emoji-fallback">${r.emoji}</span>
+           ${r.open ? "" : `<span class="card-overlay">Kommer snart</span>`}
+         </div>`
+      : `<div class="card-banner" style="background:${r.color}">
+           <span class="card-emoji">${r.emoji}</span>
+           ${r.open ? "" : `<span class="card-overlay">Kommer snart</span>`}
+         </div>`;
     return `
       <a class="${cls}" href="${href}" ${r.open ? "" : "onclick=\"return false\""}>
-        <div class="card-banner" style="background:${r.color}">
-          <span class="card-emoji">${r.emoji}</span>
-          ${r.open ? "" : `<span class="card-overlay">Kommer snart</span>`}
-        </div>
+        ${banner}
         <div class="card-body">
           <div class="card-row">
             <h3>${r.name}</h3>
@@ -77,16 +84,22 @@ function renderRestaurantPage() {
     setCart(cart);
   }
 
+  const heroImage = r.image
+    ? `<img class="r-hero-bg" src="${r.image}" alt="${r.name}" onerror="this.remove();" />`
+    : "";
   document.getElementById("restaurant-hero").innerHTML = `
-    <div class="r-hero-inner" style="background:${r.color}">
-      <div class="r-hero-emoji">${r.emoji}</div>
-      <div class="r-hero-text">
-        <h1>${r.name}</h1>
-        <p>${r.cuisine} · ★ ${r.rating} · ${r.address}</p>
-        <p class="r-blurb">${r.blurb}</p>
-        <div class="r-hero-meta">
-          <span class="hero-chip">🕒 ~${r.prepMins} min klargjøring</span>
-          <span class="hero-chip">Take-away priser</span>
+    <div class="r-hero-inner ${r.image ? "has-image" : ""}" style="background:${r.color}">
+      ${heroImage}
+      <div class="r-hero-content">
+        <div class="r-hero-emoji">${r.emoji}</div>
+        <div class="r-hero-text">
+          <h1>${r.name}</h1>
+          <p>${r.cuisine} · ★ ${r.rating} · ${r.address}</p>
+          <p class="r-blurb">${r.blurb}</p>
+          <div class="r-hero-meta">
+            <span class="hero-chip">🕒 ~${r.prepMins} min klargjøring</span>
+            <span class="hero-chip">Take-away priser</span>
+          </div>
         </div>
       </div>
     </div>
