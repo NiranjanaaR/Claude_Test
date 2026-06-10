@@ -131,6 +131,17 @@ p { margin: 0; }
   font-weight: 500;
 }
 .chip-accent { background: rgba(232, 93, 4, 0.1); border-color: rgba(232, 93, 4, 0.25); color: var(--accent-dark); }
+.chip-muted { background: var(--bg); color: var(--muted); }
+
+.card-closed { opacity: 0.55; cursor: default; pointer-events: none; }
+.card-closed .card-banner { filter: grayscale(0.4); }
+.card-overlay {
+  position: absolute; bottom: 8px; right: 12px;
+  background: rgba(0,0,0,0.5); color: white;
+  font-size: 12px; padding: 4px 10px; border-radius: 999px;
+  font-weight: 500;
+}
+.card-banner { position: relative; }
 
 /* ---- Restaurant page ---- */
 .r-hero { padding: 24px; }
@@ -144,9 +155,19 @@ p { margin: 0; }
   box-shadow: var(--shadow);
 }
 .r-hero-emoji { font-size: 64px; }
+.r-hero-text { flex: 1; }
 .r-hero-inner h1 { font-size: 32px; margin-bottom: 4px; }
 .r-hero-inner p { opacity: 0.9; }
 .r-blurb { margin-top: 8px; font-size: 15px; opacity: 0.85; }
+.r-hero-meta { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.hero-chip {
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.25);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
 
 .r-layout {
   display: grid;
@@ -159,18 +180,57 @@ p { margin: 0; }
 }
 
 .r-menu h2 { margin-bottom: 16px; }
+.menu-section { margin-bottom: 28px; }
+.menu-section-title {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 600;
+}
 .menu-item {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   padding: 16px;
-  margin-bottom: 12px;
-  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+  display: flex; align-items: flex-start; justify-content: space-between;
   gap: 16px;
 }
-.menu-item-info h4 { font-size: 16px; margin-bottom: 4px; }
-.menu-item-info p { font-size: 14px; margin-bottom: 6px; }
+.menu-item-info { flex: 1; min-width: 0; }
+.menu-item-info h4 { font-size: 16px; margin-bottom: 4px; line-height: 1.3; }
+.menu-num {
+  display: inline-block;
+  font-size: 12px;
+  background: var(--bg);
+  color: var(--muted);
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-right: 4px;
+  font-weight: 500;
+}
+.menu-item-info p { font-size: 14px; margin-bottom: 8px; }
+.menu-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .menu-price { font-weight: 600; font-size: 15px; }
+.allergen {
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 500;
+}
+.allergen-legend {
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+}
 .btn-add {
   background: var(--accent);
   color: white;
@@ -201,6 +261,8 @@ p { margin: 0; }
   padding: 10px 0;
   border-bottom: 1px solid var(--line);
 }
+.cart-row-name { min-width: 0; }
+.cart-row-name strong { font-size: 14px; display: block; line-height: 1.3; }
 .cart-row:last-child { border-bottom: none; }
 .qty {
   display: inline-flex; align-items: center; gap: 8px;

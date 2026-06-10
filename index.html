@@ -14,35 +14,39 @@
     </a>
     <div class="topbar-loc">
       <span class="dot"></span>
-      Arendal
+      Pollen, Arendal
     </div>
   </header>
 
   <section class="hero">
     <h1>Skip the queue. <br/>Pick up when it's ready.</h1>
-    <p>Order from local Arendal restaurants, choose a pickup time, and walk straight to the counter.</p>
+    <p>Forhåndsbestill fra restauranter rundt Pollen, velg en hentetid, og gå rett til disken.</p>
     <div class="hero-pills">
-      <span class="pill">No delivery fees</span>
-      <span class="pill">Reserve a time slot</span>
-      <span class="pill">Pay in the app</span>
+      <span class="pill">Ingen leveringsavgift</span>
+      <span class="pill">Reserver hentetid</span>
+      <span class="pill">Betal i appen</span>
     </div>
   </section>
 
   <main class="container">
     <div class="section-head">
-      <h2>Restaurants near you</h2>
-      <span class="muted">12 open now</span>
+      <h2>Restauranter ved Pollen</h2>
+      <span class="muted" id="open-count"></span>
     </div>
     <div id="restaurant-list" class="grid"></div>
   </main>
 
   <footer class="footer">
-    <span>Hentmat demo · Arendal</span>
-    <span class="muted">MVP preview · prices and times are not real</span>
+    <span>Hentmat demo · Pollen, Arendal</span>
+    <span class="muted">MVP-preview · ekte menyer, demoflyt</span>
   </footer>
 
   <script src="data.js"></script>
   <script src="app.js"></script>
-  <script>renderRestaurantList();</script>
+  <script>
+    renderRestaurantList();
+    const open = RESTAURANTS.filter(r => r.open).length;
+    document.getElementById("open-count").textContent = `${open} åpne nå`;
+  </script>
 </body>
 </html>
