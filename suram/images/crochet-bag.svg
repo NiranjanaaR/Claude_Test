@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+  <rect width="300" height="300" fill="#fbeee8"/>
+  <g transform="translate(150,150)">
+    <path d="M-70,-60 Q-80,90 -55,100 L55,100 Q80,90 70,-60 Z" fill="#5a2330"/>
+    <rect x="-72" y="-10" width="144" height="45" fill="#e8e2d0"/>
+    <rect x="-74" y="-35" width="148" height="28" fill="#f2eee0"/>
+    <path d="M-10,-60 Q0,-90 10,-60" fill="none" stroke="#5a2330" stroke-width="4"/>
+    <line x1="0" y1="-60" x2="0" y2="20" stroke="#5a2330" stroke-width="3"/>
+  </g>
+  <text x="150" y="285" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" fill="#8a7b73">Crochet drawstring bag · replace with your photo</text>
+</svg>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
+  <rect width="300" height="300" fill="#fbeee8"/>
+  <g transform="translate(95,150)"><path d="M0,0 L0,-70 Q40,-60 40,-20 Q40,12 0,12 Q-40,12 -40,-20 Q-40,-60 0,-70Z" fill="#1f3d2b"/><circle cx="0" cy="-22" r="16" fill="#e9d84a"/><circle cx="0" cy="-22" r="7" fill="#1f3d2b"/></g>
+  <g transform="translate(205,150) scale(-1,1)"><path d="M0,0 L0,-70 Q40,-60 40,-20 Q40,12 0,12 Q-40,12 -40,-20 Q-40,-60 0,-70Z" fill="#1f3d2b"/><circle cx="0" cy="-22" r="16" fill="#e9d84a"/><circle cx="0" cy="-22" r="7" fill="#1f3d2b"/></g>
+  <text x="150" y="280" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="13" fill="#8a7b73">Green &amp; yellow diyas · replace with your photo</text>
+</svg>
