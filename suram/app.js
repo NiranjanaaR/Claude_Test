@@ -167,6 +167,26 @@ document.getElementById("upi-close").addEventListener("click", closeUpi);
 upiOverlay.addEventListener("click", e => { if (e.target === upiOverlay) closeUpi(); });
 document.getElementById("contact-form").addEventListener("submit", handleContact);
 
+/* ---------- scroll reveal ---------- */
+function initReveal() {
+  const els = document.querySelectorAll(".reveal");
+  if (!("IntersectionObserver" in window)) {
+    els.forEach(el => el.classList.add("in"));
+    return;
+  }
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(en => {
+      if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }
+    });
+  }, { threshold: 0.12 });
+  els.forEach(el => io.observe(el));
+}
+
+/* ---------- footer year ---------- */
+const yearEl = document.getElementById("year");
+if (yearEl) yearEl.textContent = new Date().getFullYear();
+
 renderProducts();
 renderCustom();
 updateCartUI();
+initReveal();
