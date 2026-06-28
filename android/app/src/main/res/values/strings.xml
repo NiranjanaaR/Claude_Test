@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ScrollReminder</string>
+    <string name="notification_channel_name">Watching</string>
+    <string name="notification_text">ScrollReminder is watching</string>
+</resources>
